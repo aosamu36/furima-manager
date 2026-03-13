@@ -26,7 +26,7 @@
 –text: #1a1a1a;
 –muted: #8e8e93;
 –nav-h: 60px;
-–header-h: 62px;
+–header-h: 52px;
 }
 
 body {
@@ -34,7 +34,7 @@ font-family: -apple-system, ‘Hiragino Sans’, sans-serif;
 background: var(–bg);
 color: var(–text);
 min-height: 100dvh;
-padding-top: calc(var(–header-h) + env(safe-area-inset-top, 44px) + 8px);
+padding-top: calc(var(–header-h) + env(safe-area-inset-top, 50px) + 10px);
 padding-bottom: calc(var(–nav-h) + env(safe-area-inset-bottom));
 -webkit-font-smoothing: antialiased;
 }
@@ -44,8 +44,8 @@ padding-bottom: calc(var(–nav-h) + env(safe-area-inset-bottom));
 position: fixed;
 top: 0; left: 0; right: 0;
 z-index: 200;
-height: calc(var(–header-h) + env(safe-area-inset-top, 44px));
-padding-top: calc(env(safe-area-inset-top, 44px) + 2px);
+height: calc(var(–header-h) + env(safe-area-inset-top, 50px));
+padding-top: calc(env(safe-area-inset-top, 50px) + 2px);
 background: rgba(255,255,255,0.97);
 backdrop-filter: blur(12px);
 -webkit-backdrop-filter: blur(12px);
@@ -242,17 +242,17 @@ color: var(–text); outline: none;
 
 .btn-save {
 width: 100%; padding: 15px;
-background: var(–accent);
-color: #fff; border: none;
+background: var(–accent) !important;
+color: #fff !important; border: none;
 border-radius: 12px; font-family: inherit;
 font-size: 16px; font-weight: 700;
 cursor: pointer; margin-top: 8px;
 transition: opacity 0.15s;
-opacity: 1;
+opacity: 1 !important;
 -webkit-appearance: none;
+appearance: none;
 }
-.btn-save:active { opacity: 0.7; }
-.btn-save:disabled { background: #ccc; color: #999; cursor: default; }
+.btn-save:active { opacity: 0.7 !important; }
 
 /* ── SETTINGS ── */
 .settings-section { margin-bottom: 20px; }
@@ -263,15 +263,16 @@ letter-spacing: 0.8px; margin-bottom: 12px;
 }
 .btn-primary {
 width: 100%; padding: 14px;
-background: var(–accent);
-color: #fff; border: none;
+background: var(–accent) !important;
+color: #fff !important; border: none;
 border-radius: 11px; font-family: inherit;
 font-size: 15px; font-weight: 700;
 cursor: pointer; margin-top: 10px;
-opacity: 1;
+opacity: 1 !important;
 -webkit-appearance: none;
+appearance: none;
 }
-.btn-primary:active { opacity: 0.7; }
+.btn-primary:active { opacity: 0.7 !important; }
 .settings-info {
 font-size: 13px; color: var(–muted);
 line-height: 1.8;
@@ -480,10 +481,10 @@ max-width: calc(100vw - 40px); text-align: center;
 <!-- NAV -->
 
 <nav class="nav">
-  <button class="nav-btn active" id="nav-home"    onclick="showPage('home',this)">    <span class="nav-icon">🏠</span>ホーム</button>
-  <button class="nav-btn"        id="nav-add"     onclick="showPage('add',this)">     <span class="nav-icon">＋</span>追加</button>
-  <button class="nav-btn"        id="nav-chart"   onclick="showPage('chart',this)">   <span class="nav-icon">📊</span>グラフ</button>
-  <button class="nav-btn"        id="nav-settings"onclick="showPage('settings',this)"><span class="nav-icon">⚙️</span>設定</button>
+  <button class="nav-btn active" id="nav-home" onclick="showPage('home',this)"><span class="nav-icon">🏠</span>ホーム</button>
+  <button class="nav-btn" id="nav-add" onclick="showPage('add',this)"><span class="nav-icon">＋</span>追加</button>
+  <button class="nav-btn" id="nav-chart" onclick="showPage('chart',this)"><span class="nav-icon">📊</span>グラフ</button>
+  <button class="nav-btn" id="nav-settings" onclick="showPage('settings',this)"><span class="nav-icon">⚙️</span>設定</button>
 </nav>
 
 <div class="toast" id="toast"></div>
