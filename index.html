@@ -51,22 +51,23 @@ display: flex; align-items: center; justify-content: space-between;
 
 .nav {
 position: fixed; bottom: 0; left: 0; right: 0;
-background: var(–surface);
-border-top: 1px solid var(–border);
+background: #fff;
+border-top: 1px solid #e5e5ea;
 display: flex; z-index: 100;
 padding-bottom: env(safe-area-inset-bottom);
+box-shadow: 0 -1px 10px rgba(0,0,0,0.08);
 }
 .nav-btn {
-flex: 1; padding: 12px 4px 8px;
-background: none; border: none; color: var(–muted);
+flex: 1; padding: 10px 4px 6px;
+background: none; border: none; color: #999;
 font-family: inherit; font-size: 10px;
-display: flex; flex-direction: column; align-items: center; gap: 4px;
+display: flex; flex-direction: column; align-items: center; gap: 3px;
 cursor: pointer; transition: color 0.2s;
 }
-.nav-btn.active { color: var(–accent); }
-.nav-icon { font-size: 20px; line-height: 1; }
+.nav-btn.active { color: #ff6b35; }
+.nav-icon { font-size: 22px; line-height: 1; }
 
-.page { display: none; padding: 20px; }
+.page { display: none; padding: 16px 20px; }
 .page.active { display: block; }
 
 .card {
@@ -140,7 +141,7 @@ margin-bottom: 14px;
 position: relative;
 }
 .upload-area:hover, .upload-area.dragover { border-color: var(–accent); background: rgba(255,107,53,0.05); }
-.upload-area input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.upload-area input { display: none; }
 .upload-icon { font-size: 32px; margin-bottom: 8px; }
 .upload-text { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
 .upload-sub { font-size: 11px; color: var(–muted); }
@@ -264,10 +265,10 @@ opacity: 0; transition: all 0.3s; pointer-events: none; white-space: nowrap; z-i
     <div class="section-title" style="margin-bottom:16px">📸 取引画像から自動入力</div>
 
 ```
-<div class="upload-area" id="upload-area">
-  <input type="file" accept="image/*" id="img-input" onchange="handleImage(event)">
-  <div class="upload-icon">📷</div>
-  <div class="upload-text">取引画面のスクショをアップ</div>
+<div class="upload-area" id="upload-area" onclick="document.getElementById('img-input').click()">
+  <input type="file" accept="image/*" id="img-input" onchange="handleImage(event)" style="display:none">
+  <div class="upload-icon" id="upload-icon">📷</div>
+  <div class="upload-text" id="upload-text">取引画面のスクショをアップ</div>
   <div class="upload-sub">タップして選択 または カメラで撮影</div>
 </div>
 
@@ -524,8 +525,8 @@ async function handleImage(e) {
   preview.style.display = 'block';
 
   // アップロードエリアのテキスト更新
-  document.querySelector('.upload-text').textContent = '画像を選択済み';
-  document.querySelector('.upload-icon').textContent = '✅';
+  document.getElementById('upload-text').textContent = '画像を選択済み';
+  document.getElementById('upload-icon').textContent = '✅';
 
   // Base64変換
   const base64 = await new Promise(res => {
@@ -537,60 +538,31 @@ async function handleImage(e) {
   // AI解析開始
   document.getElementById('analyzing').classList.add('active');
 
+  const geminiKey = localStorage.getItem('gemini_key') || '';
+  if (!geminiKey) {
+    toast('⚙️設定からGemini APIキーを入力してください', 'error');
+    document.getElementById('analyzing').classList.remove('active');
+    return;
+  }
+
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: file.type, data: base64 }
-            },
-            {
-              type: 'text',
-              text: `この取引画面の画像から以下の情報をJSONで抽出してください。
-JSONのみ返してください。マークダウンや説明文は不要です。
-
-{
-  "name": "商品名",
-  "date": "YYYY-MM-DD形式の購入日",
-  "app": "メルカリ/ラクマ/ヤフオク/PayPayフリマ/その他",
-  "price": 商品代金の数値,
-  "fee_amount": 販売手数料の数値,
-  "shipping": 配送料の数値,
-  "profit": 販売利益の数値,
-  "delivery_method": "配送方法",
-  "item_id": "商品ID"
-}
-
-値が不明な場合は null にしてください。`
-            }
+        contents: [{
+          parts: [
+            { inline_data: { mime_type: file.type, data: base64 } },
+            { text: 'この取引画面の画像から情報を抽出してください。JSONのみ返してください。マークダウン記号(```)は不要です。形式: {"name":"商品名","date":"YYYY-MM-DD","app":"メルカリ","price":数値,"fee_amount":数値,"shipping":数値,"profit":数値,"delivery_method":"配送方法","item_id":"商品ID"} 値不明はnullにしてください。' }
           ]
-        }]
+        }],
+        generationConfig: { temperature: 0 }
       })
     });
-
     const data = await res.json();
-    const text = data.content.map(c => c.text || '').join('');
-    const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
-
-    // フォームに自動入力
-    if (parsed.name)            document.getElementById('f-name').value     = parsed.name;
-    if (parsed.date)            document.getElementById('f-date').value     = parsed.date;
-    if (parsed.app)             document.getElementById('f-app').value      = parsed.app;
-    if (parsed.price != null)   document.getElementById('f-price').value    = parsed.price;
-    if (parsed.fee_amount != null) document.getElementById('f-fee').value   = parsed.fee_amount;
-    if (parsed.shipping != null) document.getElementById('f-shipping').value = parsed.shipping;
-    if (parsed.profit != null)  document.getElementById('f-profit').value   = parsed.profit;
-    if (parsed.delivery_method) document.getElementById('f-delivery').value = parsed.delivery_method;
-    if (parsed.item_id)         document.getElementById('f-item-id').value  = parsed.item_id;
-
-    toast('✅ 解析完了！内容を確認してね');
+    if (data.error) throw new Error(data.error.message);
+    const text = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(text);
   } catch(err) {
     toast('解析に失敗しました。手動で入力してください', 'error');
     console.error(err);
@@ -626,8 +598,8 @@ async function addItem() {
     // フォームリセット
     ['f-name','f-price','f-fee','f-shipping','f-profit','f-cost','f-delivery','f-item-id'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('preview-img').style.display = 'none';
-    document.querySelector('.upload-text').textContent = '取引画面のスクショをアップ';
-    document.querySelector('.upload-icon').textContent = '📷';
+    document.getElementById('upload-text').textContent = '取引画面のスクショをアップ';
+    document.getElementById('upload-icon').textContent = '📷';
     document.getElementById('img-input').value = '';
 
     const d = new Date(date);
@@ -680,8 +652,10 @@ function saveSettings() {
   const url = document.getElementById('s-url').value.trim();
   const key = document.getElementById('s-key').value.trim();
   if (!url || !key) { toast('URLとキーを両方入力してください', 'error'); return; }
+  const gemini = document.getElementById('s-gemini').value.trim();
   localStorage.setItem('sb_url', url);
   localStorage.setItem('sb_key', key);
+  if (gemini) localStorage.setItem('gemini_key', gemini);
   _supabase = null; // reset client
   toast('✅ 設定を保存しました！');
   renderSettings();
@@ -692,6 +666,7 @@ async function renderSettings() {
   const url = localStorage.getItem('sb_url') || '';
   document.getElementById('s-url').value = url;
   document.getElementById('s-key').value = localStorage.getItem('sb_key') || '';
+  document.getElementById('s-gemini').value = localStorage.getItem('gemini_key') || '';
   document.getElementById('settings-url').textContent = url || '未設定';
   try {
     const all = await dbGetAll();
