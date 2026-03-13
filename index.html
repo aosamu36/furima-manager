@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>フリマ売上管理</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+–bg: #0f0e11;
+–surface: #1a1820;
+–surface2: #242130;
+–accent: #ff6b35;
+–accent2: #ffd166;
+–green: #06d6a0;
+–text: #f0edf5;
+–muted: #7b7490;
+–border: #2e2a3a;
+}
+
+- { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+font-family: ‘Zen Kaku Gothic New’, sans-serif;
+background: var(–bg);
+color: var(–text);
+min-height: 100vh;
+padding-bottom: 80px;
+}
+
+.header {
+background: var(–surface);
+border-bottom: 1px solid var(–border);
+padding: 16px 20px;
+position: sticky; top: 0; z-index: 100;
+display: flex; align-items: center; justify-content: space-between;
+}
+.header-title { font-size: 18px; font-weight: 900; letter-spacing: -0.5px; }
+.header-title span { color: var(–accent); }
+
+.nav {
+position: fixed; bottom: 0; left: 0; right: 0;
+background: var(–surface);
+border-top: 1px solid var(–border);
+display: flex; z-index: 100;
+}
+.nav-btn {
+flex: 1; padding: 12px 4px 8px;
+background: none; border: none; color: var(–muted);
+font-family: inherit; font-size: 10px;
+display: flex; flex-direction: column; align-items: center; gap: 4px;
+cursor: pointer; transition: color 0.2s;
+}
+.nav-btn.active { color: var(–accent); }
+.nav-icon { font-size: 20px; line-height: 1; }
+
+.page { display: none; padding: 20px; }
+.page.active { display: block; }
+
+.card {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 16px;
+padding: 16px;
+margin-bottom: 12px;
+}
+
+.summary-grid {
+display: grid; grid-template-columns: 1fr 1fr;
+gap: 10px; margin-bottom: 16px;
+}
+.summary-card {
+background: var(–surface); border: 1px solid var(–border);
+border-radius: 14px; padding: 14px;
+}
+.summary-card.accent { border-color: var(–accent); background: rgba(255,107,53,0.08); }
+.summary-card.green  { border-color: var(–green);  background: rgba(6,214,160,0.08); }
+.summary-label { font-size: 10px; color: var(–muted); margin-bottom: 6px; letter-spacing: 0.5px; text-transform: uppercase; }
+.summary-value { font-family: ‘DM Mono’, monospace; font-size: 20px; font-weight: 500; letter-spacing: -1px; }
+.summary-card.accent .summary-value { color: var(–accent); }
+.summary-card.green  .summary-value { color: var(–green); }
+
+.month-selector {
+display: flex; align-items: center; justify-content: space-between;
+margin-bottom: 16px;
+background: var(–surface); border: 1px solid var(–border);
+border-radius: 12px; padding: 10px 14px;
+}
+.month-btn { background: none; border: none; color: var(–text); font-size: 20px; cursor: pointer; padding: 0 8px; }
+.month-label { font-weight: 700; font-size: 16px; }
+
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 11px; color: var(–muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.form-input, .form-select {
+width: 100%;
+background: var(–surface2); border: 1px solid var(–border);
+border-radius: 10px; padding: 12px 14px;
+color: var(–text); font-family: inherit; font-size: 16px;
+outline: none; transition: border-color 0.2s; -webkit-appearance: none;
+}
+.form-input:focus, .form-select:focus { border-color: var(–accent); }
+.form-select option { background: var(–surface2); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.btn-primary {
+width: 100%; background: var(–accent); color: #fff;
+border: none; border-radius: 12px; padding: 14px;
+font-family: inherit; font-size: 16px; font-weight: 700;
+cursor: pointer; transition: opacity 0.2s, transform 0.1s;
+}
+.btn-primary:active { opacity: 0.8; transform: scale(0.98); }
+.btn-secondary {
+background: var(–surface2); color: var(–text);
+border: 1px solid var(–border); border-radius: 10px;
+padding: 10px 16px; font-family: inherit; font-size: 13px;
+cursor: pointer; display: block; width: 100%; text-align: center;
+}
+
+/* 画像アップロードエリア */
+.upload-area {
+border: 2px dashed var(–border);
+border-radius: 14px;
+padding: 28px 20px;
+text-align: center;
+cursor: pointer;
+transition: border-color 0.2s, background 0.2s;
+margin-bottom: 14px;
+position: relative;
+}
+.upload-area:hover, .upload-area.dragover { border-color: var(–accent); background: rgba(255,107,53,0.05); }
+.upload-area input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.upload-icon { font-size: 32px; margin-bottom: 8px; }
+.upload-text { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.upload-sub { font-size: 11px; color: var(–muted); }
+
+.preview-img {
+width: 100%; border-radius: 10px; margin-bottom: 14px;
+border: 1px solid var(–border); display: none;
+}
+
+/* AI解析中 */
+.analyzing {
+display: none;
+align-items: center; justify-content: center; gap: 10px;
+padding: 16px; background: rgba(255,107,53,0.08);
+border: 1px solid var(–accent); border-radius: 12px;
+margin-bottom: 14px; font-size: 14px; font-weight: 700; color: var(–accent);
+}
+.analyzing.active { display: flex; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { width: 18px; height: 18px; border: 2px solid var(–accent); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+.item-card {
+background: var(–surface); border: 1px solid var(–border);
+border-radius: 14px; padding: 14px; margin-bottom: 10px;
+display: flex; justify-content: space-between; align-items: center; gap: 10px;
+}
+.item-info { flex: 1; min-width: 0; }
+.item-name { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+.item-meta { font-size: 11px; color: var(–muted); display: flex; gap: 8px; align-items: center; }
+.app-badge { background: var(–surface2); border-radius: 4px; padding: 2px 6px; font-size: 10px; }
+.item-prices { text-align: right; }
+.item-sale { font-family: ‘DM Mono’, monospace; font-size: 16px; font-weight: 500; color: var(–accent2); }
+.item-profit { font-family: ‘DM Mono’, monospace; font-size: 12px; color: var(–green); }
+.item-delete { background: none; border: none; color: var(–muted); font-size: 18px; cursor: pointer; padding: 4px; flex-shrink: 0; }
+
+.chart-wrap { position: relative; height: 220px; margin: 4px 0; }
+
+.empty { text-align: center; padding: 40px 20px; color: var(–muted); }
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-text { font-size: 14px; }
+
+.section-title { font-size: 13px; font-weight: 700; color: var(–muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+
+.app-row {
+display: flex; justify-content: space-between; align-items: center;
+padding: 10px 0; border-bottom: 1px solid var(–border);
+}
+.app-row:last-child { border-bottom: none; }
+.app-name { font-size: 14px; font-weight: 700; }
+.app-stats { text-align: right; }
+.app-sale { font-family: ‘DM Mono’, monospace; font-size: 14px; color: var(–accent2); }
+.app-profit { font-family: ‘DM Mono’, monospace; font-size: 11px; color: var(–green); }
+
+.tag { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 20px; margin-right: 4px; }
+.tag-mercari { background: #e8002d22; color: #ff6b8a; border: 1px solid #ff6b8a44; }
+.tag-rakuma  { background: #00000022; color: #b09fff; border: 1px solid #b09fff44; }
+.tag-other   { background: #ffffff11; color: #aaa;    border: 1px solid #aaa4; }
+
+.db-status { font-size: 10px; padding: 3px 8px; border-radius: 20px; font-family: ‘DM Mono’, monospace; }
+.db-ok  { background: rgba(6,214,160,0.15); color: var(–green); border: 1px solid #06d6a044; }
+.db-err { background: rgba(255,107,53,0.15); color: var(–accent); border: 1px solid #ff6b3544; }
+
+.toast {
+position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+background: var(–surface); border: 1px solid var(–border);
+border-radius: 10px; padding: 10px 20px;
+font-size: 13px; font-weight: 700;
+opacity: 0; transition: all 0.3s; pointer-events: none; white-space: nowrap; z-index: 200;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { border-color: var(–green); color: var(–green); }
+.toast.error { border-color: var(–accent); color: var(–accent); }
+</style>
+
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">フリマ<span>売上</span>管理</div>
+  <span class="db-status db-ok" id="db-status">接続中…</span>
+</div>
+
+<!-- ホーム -->
+
+<div class="page active" id="page-home">
+  <div class="month-selector">
+    <button class="month-btn" onclick="changeMonth(-1)">‹</button>
+    <div class="month-label" id="month-label">読み込み中</div>
+    <button class="month-btn" onclick="changeMonth(1)">›</button>
+  </div>
+  <div class="summary-grid">
+    <div class="summary-card accent">
+      <div class="summary-label">売上合計</div>
+      <div class="summary-value" id="total-sales">¥0</div>
+    </div>
+    <div class="summary-card green">
+      <div class="summary-label">純利益</div>
+      <div class="summary-value" id="total-profit">¥0</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">手数料合計</div>
+      <div class="summary-value" style="font-size:18px" id="total-fee">¥0</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">販売件数</div>
+      <div class="summary-value" style="font-size:18px" id="month-count">0件</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-title">アプリ別</div>
+    <div id="app-breakdown"></div>
+  </div>
+  <div class="section-title">今月の販売記録</div>
+  <div id="item-list"><div class="empty"><div class="empty-icon">⏳</div><div class="empty-text">読み込み中...</div></div></div>
+</div>
+
+<!-- 追加 -->
+
+<div class="page" id="page-add">
+  <div class="card">
+    <div class="section-title" style="margin-bottom:16px">📸 取引画像から自動入力</div>
+
+```
+<div class="upload-area" id="upload-area">
+  <input type="file" accept="image/*" id="img-input" onchange="handleImage(event)">
+  <div class="upload-icon">📷</div>
+  <div class="upload-text">取引画面のスクショをアップ</div>
+  <div class="upload-sub">タップして選択 または カメラで撮影</div>
+</div>
+
+<img class="preview-img" id="preview-img" alt="プレビュー">
+
+<div class="analyzing" id="analyzing">
+  <div class="spinner"></div>
+  AIが解析中です…
+</div>
+
+<div class="form-group">
+  <label class="form-label">商品名</label>
+  <input class="form-input" id="f-name" type="text" placeholder="例：遊戯王 ゴーズトークン">
+</div>
+<div class="form-row">
+  <div class="form-group">
+    <label class="form-label">購入日時</label>
+    <input class="form-input" id="f-date" type="date">
+  </div>
+  <div class="form-group">
+    <label class="form-label">フリマアプリ</label>
+    <select class="form-select" id="f-app">
+      <option value="メルカリ">メルカリ</option>
+      <option value="ラクマ">ラクマ</option>
+      <option value="ヤフオク">ヤフオク</option>
+      <option value="PayPayフリマ">PayPayフリマ</option>
+      <option value="その他">その他</option>
+    </select>
+  </div>
+</div>
+<div class="form-row">
+  <div class="form-group">
+    <label class="form-label">商品代金 (円)</label>
+    <input class="form-input" id="f-price" type="number" inputmode="numeric" placeholder="0">
+  </div>
+  <div class="form-group">
+    <label class="form-label">販売手数料 (円)</label>
+    <input class="form-input" id="f-fee" type="number" inputmode="numeric" placeholder="0">
+  </div>
+</div>
+<div class="form-row">
+  <div class="form-group">
+    <label class="form-label">配送料 (円)</label>
+    <input class="form-input" id="f-shipping" type="number" inputmode="numeric" placeholder="0">
+  </div>
+  <div class="form-group">
+    <label class="form-label">販売利益 (円)</label>
+    <input class="form-input" id="f-profit" type="number" inputmode="numeric" placeholder="0">
+  </div>
+</div>
+<div class="form-row">
+  <div class="form-group">
+    <label class="form-label">仕入れ値 (円)※手入力</label>
+    <input class="form-input" id="f-cost" type="number" inputmode="numeric" placeholder="0">
+  </div>
+  <div class="form-group">
+    <label class="form-label">配送方法</label>
+    <input class="form-input" id="f-delivery" type="text" placeholder="ゆうゆうメルカリ便">
+  </div>
+</div>
+<div class="form-group">
+  <label class="form-label">商品ID</label>
+  <input class="form-input" id="f-item-id" type="text" placeholder="m85910249258">
+</div>
+
+<button class="btn-primary" onclick="addItem()">Supabaseに保存する</button>
+```
+
+  </div>
+</div>
+
+<!-- グラフ -->
+
+<div class="page" id="page-chart">
+  <div class="card">
+    <div class="section-title">月別 売上 & 純利益</div>
+    <div class="chart-wrap"><canvas id="monthly-chart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="section-title">月別 詳細</div>
+    <div id="monthly-table"></div>
+  </div>
+</div>
+
+<!-- 設定 -->
+
+<div class="page" id="page-settings">
+  <div class="card">
+    <div class="section-title" style="margin-bottom:12px">Supabase 接続設定</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.7">
+      SupabaseのURLとAPIキーを設定してください。<br>
+      一度設定すればこのデバイスに保存されます。
+    </p>
+    <div class="form-group">
+      <label class="form-label">Project URL</label>
+      <input class="form-input" id="s-url" type="text" placeholder="https://xxxx.supabase.co">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Publishable (anon) Key</label>
+      <input class="form-input" id="s-key" type="text" placeholder="sb_publishable_...">
+    </div>
+    <button class="btn-primary" onclick="saveSettings()">設定を保存する</button>
+  </div>
+  <div class="card">
+    <div class="section-title" style="margin-bottom:12px">DB情報</div>
+    <div style="font-size:13px;line-height:2;font-family:'DM Mono',monospace">
+      <div id="settings-url" style="color:var(--muted);font-size:11px;word-break:break-all"></div>
+      <div id="settings-count">件数：-</div>
+    </div>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" id="nav-home" onclick="showPage('home',this)"><span class="nav-icon">🏠</span>ホーム</button>
+  <button class="nav-btn" id="nav-add"  onclick="showPage('add',this)"><span class="nav-icon">＋</span>追加</button>
+  <button class="nav-btn" id="nav-chart" onclick="showPage('chart',this);renderChart()"><span class="nav-icon">📊</span>グラフ</button>
+  <button class="nav-btn" id="nav-settings" onclick="showPage('settings',this);renderSettings()"><span class="nav-icon">⚙️</span>設定</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ======== 設定 ========
+// ここにご自身のSupabase情報を入力してください
+const SUPABASE_URL = localStorage.getItem('sb_url') || 'YOUR_SUPABASE_URL';
+const SUPABASE_KEY = localStorage.getItem('sb_key') || 'YOUR_SUPABASE_KEY';
+
+// ======== Supabase API ========
+async function sbFetch(path, options = {}) {
+  const baseUrl = (localStorage.getItem('sb_url') || SUPABASE_URL).replace(/\/$/, '');
+  const key  = localStorage.getItem('sb_key') || SUPABASE_KEY;
+  const res = await fetch(baseUrl + path, {
+    ...options,
+    headers: {
+      'apikey': key,
+      'Authorization': 'Bearer ' + key,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+      'X-Client-Info': 'supabase-js/2.0.0',
+      ...(options.headers || {})
+    }
+  });
+  if (!res.ok) { const e = await res.text(); throw new Error(e); }
+  return res.status === 204 ? null : res.json();
+}
+
+const dbGetAll = () => sbFetch('/rest/v1/items?select=*&order=date.desc');
+const dbInsert = item => sbFetch('/rest/v1/items', { method: 'POST', body: JSON.stringify(item) });
+const dbDelete = id => sbFetch(`/rest/v1/items?id=eq.${id}`, { method: 'DELETE' });
+
+// ======== State ========
+let currentYear = new Date().getFullYear(), currentMonth = new Date().getMonth() + 1;
+let chartInstance = null;
+const fmt = n => '¥' + Math.round(n).toLocaleString('ja-JP');
+
+// ======== Toast ========
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast ${type} show`;
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ======== Nav ========
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'home') renderHome();
+}
+
+function changeMonth(d) {
+  currentMonth += d;
+  if (currentMonth > 12) { currentMonth = 1; currentYear++; }
+  if (currentMonth < 1)  { currentMonth = 12; currentYear--; }
+  renderHome();
+}
+
+// ======== Home ========
+async function renderHome() {
+  document.getElementById('month-label').textContent = `${currentYear}年${currentMonth}月`;
+  try {
+    const all = await dbGetAll();
+    const mi = all.filter(i => {
+      const d = new Date(i.date);
+      return d.getFullYear() === currentYear && d.getMonth() + 1 === currentMonth;
+    });
+
+    document.getElementById('total-sales').textContent  = fmt(mi.reduce((s,i)=>s+(i.price||0),0));
+    document.getElementById('total-profit').textContent = fmt(mi.reduce((s,i)=>s+(i.profit||0),0));
+    document.getElementById('total-fee').textContent    = fmt(mi.reduce((s,i)=>s+(i.fee_amount||0),0));
+    document.getElementById('month-count').textContent  = mi.length + '件';
+
+    const appMap = {};
+    mi.forEach(i => {
+      if (!appMap[i.app]) appMap[i.app] = {sales:0, profit:0};
+      appMap[i.app].sales  += i.price || 0;
+      appMap[i.app].profit += i.profit || 0;
+    });
+    const bd = document.getElementById('app-breakdown');
+    bd.innerHTML = Object.keys(appMap).length
+      ? Object.entries(appMap).map(([app,s])=>`<div class="app-row"><div class="app-name">${app}</div><div class="app-stats"><div class="app-sale">${fmt(s.sales)}</div><div class="app-profit">利益 ${fmt(s.profit)}</div></div></div>`).join('')
+      : '<div style="color:var(--muted);font-size:13px;padding:8px 0">データなし</div>';
+
+    const listEl = document.getElementById('item-list');
+    if (!mi.length) {
+      listEl.innerHTML = '<div class="empty"><div class="empty-icon">📦</div><div class="empty-text">まだ記録がありません<br>＋から追加してね</div></div>';
+      return;
+    }
+    listEl.innerHTML = mi.map(i => {
+      const cls = i.app==='メルカリ'?'tag-mercari':i.app==='ラクマ'?'tag-rakuma':'tag-other';
+      const d = new Date(i.date);
+      return `<div class="item-card">
+        <div class="item-info">
+          <div class="item-name">${i.name}</div>
+          <div class="item-meta"><span class="app-badge tag ${cls}">${i.app}</span><span>${d.getMonth()+1}/${d.getDate()}</span></div>
+        </div>
+        <div class="item-prices">
+          <div class="item-sale">${fmt(i.price||0)}</div>
+          <div class="item-profit">+${fmt(i.profit||0)}</div>
+        </div>
+        <button class="item-delete" onclick="deleteItem('${i.id}')">🗑</button>
+      </div>`;
+    }).join('');
+
+    document.getElementById('db-status').textContent = 'DB ✓';
+    document.getElementById('db-status').className = 'db-status db-ok';
+  } catch(e) {
+    document.getElementById('db-status').textContent = 'DB エラー';
+    document.getElementById('db-status').className = 'db-status db-err';
+    document.getElementById('item-list').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">接続エラー<br>⚙️設定からURLとキーを確認してね</div></div>';
+  }
+}
+
+// ======== 画像解析 ========
+async function handleImage(e) {
+  const file = e.target.files[0]; if (!file) return;
+
+  // プレビュー
+  const preview = document.getElementById('preview-img');
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = 'block';
+
+  // アップロードエリアのテキスト更新
+  document.querySelector('.upload-text').textContent = '画像を選択済み';
+  document.querySelector('.upload-icon').textContent = '✅';
+
+  // Base64変換
+  const base64 = await new Promise(res => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.readAsDataURL(file);
+  });
+
+  // AI解析開始
+  document.getElementById('analyzing').classList.add('active');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: file.type, data: base64 }
+            },
+            {
+              type: 'text',
+              text: `この取引画面の画像から以下の情報をJSONで抽出してください。
+JSONのみ返してください。マークダウンや説明文は不要です。
+
+{
+  "name": "商品名",
+  "date": "YYYY-MM-DD形式の購入日",
+  "app": "メルカリ/ラクマ/ヤフオク/PayPayフリマ/その他",
+  "price": 商品代金の数値,
+  "fee_amount": 販売手数料の数値,
+  "shipping": 配送料の数値,
+  "profit": 販売利益の数値,
+  "delivery_method": "配送方法",
+  "item_id": "商品ID"
+}
+
+値が不明な場合は null にしてください。`
+            }
+          ]
+        }]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.content.map(c => c.text || '').join('');
+    const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
+
+    // フォームに自動入力
+    if (parsed.name)            document.getElementById('f-name').value     = parsed.name;
+    if (parsed.date)            document.getElementById('f-date').value     = parsed.date;
+    if (parsed.app)             document.getElementById('f-app').value      = parsed.app;
+    if (parsed.price != null)   document.getElementById('f-price').value    = parsed.price;
+    if (parsed.fee_amount != null) document.getElementById('f-fee').value   = parsed.fee_amount;
+    if (parsed.shipping != null) document.getElementById('f-shipping').value = parsed.shipping;
+    if (parsed.profit != null)  document.getElementById('f-profit').value   = parsed.profit;
+    if (parsed.delivery_method) document.getElementById('f-delivery').value = parsed.delivery_method;
+    if (parsed.item_id)         document.getElementById('f-item-id').value  = parsed.item_id;
+
+    toast('✅ 解析完了！内容を確認してね');
+  } catch(err) {
+    toast('解析に失敗しました。手動で入力してください', 'error');
+    console.error(err);
+  } finally {
+    document.getElementById('analyzing').classList.remove('active');
+  }
+}
+
+// ======== 追加 ========
+async function addItem() {
+  const name = document.getElementById('f-name').value.trim();
+  const date = document.getElementById('f-date').value;
+  const app  = document.getElementById('f-app').value;
+  const price = parseFloat(document.getElementById('f-price').value) || 0;
+
+  if (!name) { toast('商品名を入力してください', 'error'); return; }
+  if (!date) { toast('日付を入力してください', 'error'); return; }
+  if (!price) { toast('商品代金を入力してください', 'error'); return; }
+
+  const item = {
+    id: Date.now().toString(),
+    name, date, app, price,
+    fee_amount: parseFloat(document.getElementById('f-fee').value) || 0,
+    shipping:   parseFloat(document.getElementById('f-shipping').value) || 0,
+    profit:     parseFloat(document.getElementById('f-profit').value) || 0,
+    cost:       parseFloat(document.getElementById('f-cost').value) || 0,
+    delivery_method: document.getElementById('f-delivery').value || null,
+    item_id: document.getElementById('f-item-id').value || null,
+  };
+
+  try {
+    await dbInsert(item);
+    // フォームリセット
+    ['f-name','f-price','f-fee','f-shipping','f-profit','f-cost','f-delivery','f-item-id'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('preview-img').style.display = 'none';
+    document.querySelector('.upload-text').textContent = '取引画面のスクショをアップ';
+    document.querySelector('.upload-icon').textContent = '📷';
+    document.getElementById('img-input').value = '';
+
+    const d = new Date(date);
+    currentYear = d.getFullYear(); currentMonth = d.getMonth() + 1;
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('nav-home').classList.add('active');
+    showPage('home', document.getElementById('nav-home'));
+    toast('✅ 保存しました！');
+  } catch(e) {
+    toast('保存に失敗しました', 'error');
+    console.error(e);
+  }
+}
+
+async function deleteItem(id) {
+  if (!confirm('この記録を削除しますか？')) return;
+  try { await dbDelete(id); renderHome(); toast('削除しました'); }
+  catch(e) { toast('削除に失敗しました', 'error'); }
+}
+
+// ======== Chart ========
+async function renderChart() {
+  try {
+    const all = await dbGetAll();
+    const now = new Date();
+    const months = Array.from({length:12},(_,i)=>{ const d=new Date(now.getFullYear(),now.getMonth()-(11-i),1); return {year:d.getFullYear(),month:d.getMonth()+1}; });
+    const filter = m => all.filter(i=>{ const d=new Date(i.date); return d.getFullYear()===m.year&&d.getMonth()+1===m.month; });
+    const sales   = months.map(m=>filter(m).reduce((s,i)=>s+(i.price||0),0));
+    const profits = months.map(m=>filter(m).reduce((s,i)=>s+(i.profit||0),0));
+    if (chartInstance) { chartInstance.destroy(); chartInstance=null; }
+    chartInstance = new Chart(document.getElementById('monthly-chart').getContext('2d'), {
+      type:'bar',
+      data:{ labels:months.map(m=>`${m.month}月`), datasets:[
+        {label:'売上',   data:sales,   backgroundColor:'rgba(255,107,53,0.7)',borderRadius:6,borderSkipped:false},
+        {label:'純利益', data:profits, backgroundColor:'rgba(6,214,160,0.7)', borderRadius:6,borderSkipped:false}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#f0edf5',font:{size:11}}},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.parsed.y)}}},
+        scales:{x:{ticks:{color:'#7b7490',font:{size:10}},grid:{color:'#2e2a3a'}},y:{ticks:{color:'#7b7490',font:{size:10},callback:v=>'¥'+v.toLocaleString()},grid:{color:'#2e2a3a'}}}}
+    });
+    const rows = months.map((m,i)=>({m,s:sales[i],p:profits[i],cnt:filter(m).length})).filter(r=>r.s>0||r.p>0).reverse();
+    document.getElementById('monthly-table').innerHTML = rows.length
+      ? rows.map(r=>`<div class="app-row"><div><div class="app-name">${r.m.year}年${r.m.month}月</div><div style="font-size:11px;color:var(--muted)">${r.cnt}件</div></div><div class="app-stats"><div class="app-sale">${fmt(r.s)}</div><div class="app-profit">利益 ${fmt(r.p)}</div></div></div>`).join('')
+      : '<div style="color:var(--muted);font-size:13px;padding:8px 0">データなし</div>';
+  } catch(e) { console.error(e); }
+}
+
+// ======== Settings ========
+function saveSettings() {
+  const url = document.getElementById('s-url').value.trim();
+  const key = document.getElementById('s-key').value.trim();
+  if (!url || !key) { toast('URLとキーを両方入力してください', 'error'); return; }
+  localStorage.setItem('sb_url', url);
+  localStorage.setItem('sb_key', key);
+  toast('✅ 設定を保存しました！');
+  renderSettings();
+  renderHome();
+}
+
+async function renderSettings() {
+  const url = localStorage.getItem('sb_url') || '';
+  document.getElementById('s-url').value = url;
+  document.getElementById('s-key').value = localStorage.getItem('sb_key') || '';
+  document.getElementById('settings-url').textContent = url || '未設定';
+  try {
+    const all = await dbGetAll();
+    document.getElementById('settings-count').textContent = `件数：${all.length} 件`;
+  } catch { document.getElementById('settings-count').textContent = '件数：接続エラー'; }
+}
+
+// ======== Init ========
+document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+const savedUrl = localStorage.getItem('sb_url');
+const savedKey = localStorage.getItem('sb_key');
+if (!savedUrl || savedUrl === 'YOUR_SUPABASE_URL') {
+  // 未設定なら設定ページに誘導
+  document.getElementById('db-status').textContent = '要設定';
+  document.getElementById('db-status').className = 'db-status db-err';
+  document.getElementById('item-list').innerHTML = '<div class="empty"><div class="empty-icon">⚙️</div><div class="empty-text">まず⚙️設定からSupabaseの<br>URLとキーを入力してね</div></div>';
+} else {
+  renderHome();
+}
+</script>
+
+</body>
+</html>
