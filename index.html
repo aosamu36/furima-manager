@@ -23,7 +23,7 @@
 –text: #1a1a1a;
 –muted: #8e8e93;
 –nav-h: 60px;
-–header-h: 52px;
+–header-h: 56px;
 }
 
 body {
@@ -91,6 +91,7 @@ transition: color 0.15s;
 
 /* ── PAGE ── */
 .page { display: none; padding: 16px; }
+#page-add { padding-top: 20px; }
 .page.active { display: block; }
 
 /* ── CARDS ── */
@@ -301,7 +302,7 @@ max-width: calc(100vw - 40px); text-align: center;
 <!-- HOME -->
 
 <div class="page active" id="page-home">
-  <div class="month-nav">
+  <div class="month-nav" style="margin-top:4px">
     <button class="month-btn" onclick="changeMonth(-1)">‹</button>
     <span class="month-label" id="month-label"></span>
     <button class="month-btn" onclick="changeMonth(1)">›</button>
@@ -649,7 +650,7 @@ async function handleImage(e) {
     if (data.error) throw new Error(data.error.message);
 
     const raw = data.candidates[0].content.parts[0].text
-      .replace(/```json|```/g, '').trim();
+      .replace(/`{3}json|`{3}/g, '').trim();
     const p = JSON.parse(raw);
 
     if (p.name)            document.getElementById('f-name').value     = p.name;
@@ -759,6 +760,8 @@ async function renderSettings() {
 
 // ── Init ──
 document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+// Reset client to ensure fresh connection
+_sb = null;
 renderHome();
 </script>
 
