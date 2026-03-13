@@ -703,7 +703,7 @@ async function handleImage(e) {
 
   const geminiKey = localStorage.getItem('gemini_key') || '';
   if (!geminiKey) {
-    toast('⚙️設定からGemini APIキーを入力してください', 'error');
+    toast('Gemini APIキーを設定してください', 'error');
     return;
   }
 
@@ -713,48 +713,60 @@ async function handleImage(e) {
   document.getElementById('upload-text').textContent = 'AI解析中...';
 
   try {
-    const base64 = await new Promise(res => {
-      const r = new FileReader();
-      r.onload = () => res(r.result.split(',')[1]);
-      r.readAsDataURL(file);
+    // canvas経由でJPEGに変換（HEIC対応・サイズ縮小）
+    const jpegBase64 = await new Promise((res, rej) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const max = 1200;
+        let w = img.width, h = img.height;
+        if (w > max || h > max) {
+          if (w > h) { h = Math.round(h * max / w); w = max; }
+          else { w = Math.round(w * max / h); h = max; }
+        }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        res(canvas.toDataURL('image/jpeg', 0.85).split(',')[1]);
+      };
+      img.onerror = () => rej(new Error('画像読み込み失敗'));
+      img.src = url;
     });
 
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + geminiKey,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{
             parts: [
-              { inline_data: { mime_type: file.type, data: base64 } },
-              { text: 'これはフリマアプリ（メルカリ等）の取引完了画面です。以下のJSON形式のみで返してください。説明文やマークダウン不要。{"name":"商品名","date":"YYYY-MM-DD","app":"メルカリ","price":販売価格の数値,"fee_amount":販売手数料の数値,"shipping":送料の数値,"profit":販売利益の数値,"delivery_method":"配送方法","item_id":"商品ID"} 数値は整数。不明な項目はnull。' }
+              { inline_data: { mime_type: 'image/jpeg', data: jpegBase64 } },
+              { text: 'これはフリマアプリの取引画面です。JSONのみ返してください。{"name":"商品名","date":"YYYY-MM-DD","app":"メルカリ","price":数値,"fee_amount":数値,"shipping":数値,"profit":数値,"delivery_method":"配送方法","item_id":"商品ID"} 不明はnull。' }
             ]
           }],
-          generationConfig: { temperature: 0 }
+          generationConfig: { temperature: 0, maxOutputTokens: 500 }
         })
       }
     );
 
     const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
+    if (data.error) throw new Error('APIエラー: ' + data.error.message);
+    if (!data.candidates || !data.candidates[0]) throw new Error('レスポンス空');
 
     const rawText = data.candidates[0].content.parts[0].text;
-    console.log('Gemini raw:', rawText);
-    // Extract JSON from response
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('JSONが見つかりませんでした');
+    if (!jsonMatch) throw new Error('JSON見つからず: ' + rawText.slice(0,40));
     const p = JSON.parse(jsonMatch[0]);
-    console.log('Parsed:', p);
 
     if (p.name)               document.getElementById('f-name').value     = p.name;
     if (p.date)               document.getElementById('f-date').value     = p.date.replace(/-/g, '/');
     if (p.app) {
       const sel = document.getElementById('f-app');
-      // Try to match app name
-      const appMap = {'メルカリ':'メルカリ','ラクマ':'ラクマ','ヤフオク':'ヤフオク','paypay':'PayPayフリマ','paypayfurima':'PayPayフリマ'};
-      const matched = Object.entries(appMap).find(([k]) => p.app.toLowerCase().includes(k.toLowerCase()));
-      sel.value = matched ? matched[1] : (p.app || 'メルカリ');
+      const keys = ['メルカリ','ラクマ','ヤフオク','PayPayフリマ'];
+      const matched = keys.find(k => p.app.includes(k));
+      sel.value = matched || 'メルカリ';
     }
     if (p.price != null)      document.getElementById('f-price').value    = p.price;
     if (p.fee_amount != null) document.getElementById('f-fee').value      = p.fee_amount;
@@ -763,22 +775,20 @@ async function handleImage(e) {
     if (p.delivery_method)    document.getElementById('f-delivery').value = p.delivery_method;
     if (p.item_id)            document.getElementById('f-item-id').value  = p.item_id;
 
-    // 完了ポップアップ表示
     showAnalyzeComplete();
+
   } catch(err) {
-    console.error(err);
-    const m = err.message || '';
+    const m = err.message || '不明なエラー';
     if (m.includes('quota') || m.includes('RESOURCE_EXHAUSTED')) {
-      toast('無料枠上限です。AI Studioで新しいキーを作成してください', 'error');
+      toast('無料枠上限。新しいAPIキーを作成してください', 'error');
     } else {
-      toast('解析失敗: ' + m.slice(0,60), 'error');
+      toast('解析失敗: ' + m.slice(0, 80), 'error');
     }
   } finally {
     btn.classList.remove('analyzing');
     document.getElementById('upload-icon').textContent = '📷';
     document.getElementById('upload-text').textContent = '取引スクショをタップして選択';
   }
-
 }
 
 // ── Save Item ──
