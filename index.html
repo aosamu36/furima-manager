@@ -92,7 +92,7 @@ transition: color 0.15s;
 .nav-icon { font-size: 22px; line-height: 1; }
 
 /* ── PAGE ── */
-.page { display: none; padding: 16px; }
+.page { display: none; padding: 16px; padding-bottom: 32px; }
 #page-add { padding-top: 20px; }
 .page.active { display: block; }
 
@@ -196,10 +196,33 @@ border-radius: 12px;
 display: flex; align-items: center; justify-content: center; gap: 10px;
 font-size: 14px; font-weight: 600; color: var(–muted);
 cursor: pointer; margin-bottom: 16px;
-transition: border-color 0.2s, background 0.2s;
+transition: all 0.2s;
 }
 .upload-btn:active { background: #f0f0f5; border-color: var(–accent); }
-.upload-btn.analyzing { border-color: var(–accent); color: var(–accent); }
+.upload-btn.analyzing { border-color: var(–accent); color: var(–accent); background: #fff8f5; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+display: inline-block;
+width: 20px; height: 20px;
+border: 2px solid #ffcbb5;
+border-top-color: var(–accent);
+border-radius: 50%;
+animation: spin 0.7s linear infinite;
+flex-shrink: 0;
+}
+
+/* スピナー */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+display: inline-block;
+width: 20px; height: 20px;
+border: 2px solid #ffcbb5;
+border-top-color: var(–accent);
+border-radius: 50%;
+animation: spin 0.7s linear infinite;
+flex-shrink: 0;
+}
 
 .form-row {
 display: grid;
@@ -285,6 +308,44 @@ line-height: 1.8;
 /* ── CHART ── */
 .chart-wrap { position: relative; height: 220px; margin: 4px 0; }
 
+/* ── ANALYZE MODAL ── */
+.analyze-modal {
+position: fixed;
+inset: 0; z-index: 400;
+display: flex; align-items: center; justify-content: center;
+background: rgba(0,0,0,0.3);
+opacity: 0; pointer-events: none;
+transition: opacity 0.2s;
+}
+.analyze-modal.show { opacity: 1; pointer-events: auto; }
+.analyze-modal-inner {
+background: #fff;
+border-radius: 20px;
+padding: 32px 40px;
+text-align: center;
+box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+transform: scale(0.9);
+transition: transform 0.2s;
+}
+.analyze-modal.show .analyze-modal-inner { transform: scale(1); }
+
+/* ── ANALYZE MODAL ── */
+.analyze-modal {
+position: fixed; inset: 0; z-index: 400;
+display: flex; align-items: center; justify-content: center;
+background: rgba(0,0,0,0.35);
+opacity: 0; pointer-events: none;
+transition: opacity 0.25s;
+}
+.analyze-modal.show { opacity: 1; pointer-events: auto; }
+.analyze-modal-inner {
+background: #fff; border-radius: 20px;
+padding: 36px 48px; text-align: center;
+box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+transform: scale(0.85); transition: transform 0.25s;
+}
+.analyze-modal.show .analyze-modal-inner { transform: scale(1); }
+
 /* ── TOAST ── */
 .toast {
 position: fixed;
@@ -364,20 +425,20 @@ max-width: calc(100vw - 40px); text-align: center;
       <span id="upload-icon">📷</span>
       <span id="upload-text">取引スクショをタップして選択</span>
     </button>
-    <input type="file" accept="image/*" id="img-input" style="display:none" onchange="handleImage(event)">
+    <input type="file" accept="image/*" id="img-input" style="display:none" onchange="handleImage(event)" autocomplete="off">
   </div>
 
   <div class="card">
     <div class="form-group">
       <label class="form-label">商品名</label>
-      <input class="form-input" id="f-name" type="text" placeholder="例：遊戯王 ゴーズトークン">
+      <input class="form-input" id="f-name" type="text" placeholder="例：遊戯王 ゴーズトークン" autocomplete="off">
     </div>
 
 ```
 <div class="form-row">
   <div>
     <label class="form-label">購入日時</label>
-    <input class="form-input" id="f-date" type="date">
+    <input class="form-input" id="f-date" type="date" autocomplete="off">
   </div>
   <div>
     <label class="form-label">フリマアプリ</label>
@@ -394,39 +455,39 @@ max-width: calc(100vw - 40px); text-align: center;
 <div class="form-row">
   <div>
     <label class="form-label">商品代金（円）</label>
-    <input class="form-input" id="f-price" type="number" placeholder="0">
+    <input class="form-input" id="f-price" type="number" placeholder="0" autocomplete="off">
   </div>
   <div>
     <label class="form-label">販売手数料（円）</label>
-    <input class="form-input" id="f-fee" type="number" placeholder="0">
+    <input class="form-input" id="f-fee" type="number" placeholder="0" autocomplete="off">
   </div>
 </div>
 
 <div class="form-row">
   <div>
     <label class="form-label">配送料（円）</label>
-    <input class="form-input" id="f-shipping" type="number" placeholder="0">
+    <input class="form-input" id="f-shipping" type="number" placeholder="0" autocomplete="off">
   </div>
   <div>
     <label class="form-label">販売利益（円）</label>
-    <input class="form-input" id="f-profit" type="number" placeholder="0">
+    <input class="form-input" id="f-profit" type="number" placeholder="0" autocomplete="off">
   </div>
 </div>
 
 <div class="form-row">
   <div>
     <label class="form-label">仕入れ値（円）</label>
-    <input class="form-input" id="f-cost" type="number" placeholder="0">
+    <input class="form-input" id="f-cost" type="number" placeholder="0" autocomplete="off">
   </div>
   <div>
     <label class="form-label">配送方法</label>
-    <input class="form-input" id="f-delivery" type="text" placeholder="ゆうゆうメルカリ便">
+    <input class="form-input" id="f-delivery" type="text" placeholder="ゆうゆうメルカリ便" autocomplete="off">
   </div>
 </div>
 
 <div class="form-group">
   <label class="form-label">商品ID</label>
-  <input class="form-input" id="f-item-id" type="text" placeholder="m12345...">
+  <input class="form-input" id="f-item-id" type="text" placeholder="m12345..." autocomplete="off">
 </div>
 
 <button class="btn-save" onclick="saveItem()">Supabaseに保存する</button>
@@ -454,15 +515,15 @@ max-width: calc(100vw - 40px); text-align: center;
 ```
 <div class="form-group">
   <label class="form-label">Project URL</label>
-  <input class="form-input" id="s-url" type="text" placeholder="https://xxxx.supabase.co">
+  <input class="form-input" id="s-url" type="text" placeholder="https://xxxx.supabase.co" autocomplete="off">
 </div>
 <div class="form-group">
   <label class="form-label">Publishable (anon) Key</label>
-  <input class="form-input" id="s-key" type="text" placeholder="sb_publishable_...">
+  <input class="form-input" id="s-key" type="text" placeholder="sb_publishable_..." autocomplete="off">
 </div>
 <div class="form-group">
   <label class="form-label">Gemini API Key（画像解析用）</label>
-  <input class="form-input" id="s-gemini" type="password" placeholder="AIza...">
+  <input class="form-input" id="s-gemini" type="password" placeholder="AIza..." autocomplete="off">
   <div style="margin-top:6px">
     <a class="settings-link" href="https://aistudio.google.com/apikey" target="_blank" style="font-size:12px">→ Google AI Studioで無料取得</a>
   </div>
@@ -491,6 +552,23 @@ max-width: calc(100vw - 40px); text-align: center;
 </nav>
 
 <div class="toast" id="toast"></div>
+<div id="analyze-modal" class="analyze-modal">
+  <div class="analyze-modal-inner">
+    <div style="font-size:36px;margin-bottom:8px">✅</div>
+    <div style="font-size:16px;font-weight:700">解析完了！</div>
+    <div style="font-size:13px;color:#8e8e93;margin-top:4px">内容を確認してください</div>
+  </div>
+</div>
+
+<!-- 解析完了モーダル -->
+
+<div id="analyze-modal" class="analyze-modal">
+  <div class="analyze-modal-inner">
+    <div style="font-size:32px;margin-bottom:8px">✅</div>
+    <div style="font-size:16px;font-weight:700;color:#1a1a1a">解析完了！</div>
+    <div style="font-size:13px;color:#8e8e93;margin-top:4px">内容を確認してください</div>
+  </div>
+</div>
 
 <script>
 // ── Supabase ──
@@ -631,7 +709,7 @@ async function handleImage(e) {
 
   const btn = document.getElementById('upload-btn');
   btn.classList.add('analyzing');
-  document.getElementById('upload-icon').textContent = '⏳';
+  document.getElementById('upload-icon').innerHTML = '<span class="spinner"></span>';
   document.getElementById('upload-text').textContent = 'AI解析中...';
 
   try {
@@ -685,7 +763,8 @@ async function handleImage(e) {
     if (p.delivery_method)    document.getElementById('f-delivery').value = p.delivery_method;
     if (p.item_id)            document.getElementById('f-item-id').value  = p.item_id;
 
-    toast('✅ 解析完了！内容を確認してね');
+    // 完了ポップアップ表示
+    showAnalyzeComplete();
   } catch(err) {
     console.error(err);
     const m = err.message || '';
@@ -699,6 +778,7 @@ async function handleImage(e) {
     document.getElementById('upload-icon').textContent = '📷';
     document.getElementById('upload-text').textContent = '取引スクショをタップして選択';
   }
+
 }
 
 // ── Save Item ──
@@ -783,6 +863,20 @@ async function renderSettings() {
     const all = await dbGetAll();
     document.getElementById('settings-count').textContent = `件数：${all.length} 件`;
   } catch { document.getElementById('settings-count').textContent = '件数：接続エラー'; }
+}
+
+// ── Analyze Complete Modal ──
+function showAnalyzeComplete() {
+  const modal = document.getElementById('analyze-modal');
+  modal.classList.add('show');
+  setTimeout(() => modal.classList.remove('show'), 2500);
+}
+
+// ── Analyze Complete ──
+function showAnalyzeComplete() {
+  const modal = document.getElementById('analyze-modal');
+  modal.classList.add('show');
+  setTimeout(() => modal.classList.remove('show'), 2500);
 }
 
 // ── Init ──
