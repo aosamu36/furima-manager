@@ -4,7 +4,7 @@
 
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="フリマ管理">
@@ -431,14 +431,14 @@ max-width: calc(100vw - 40px); text-align: center;
   <div class="card">
     <div class="form-group">
       <label class="form-label">商品名</label>
-      <input class="form-input" id="f-name" type="text" placeholder="例：遊戯王 ゴーズトークン" autocomplete="off">
+      <input class="form-input" id="f-name" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="例：遊戯王 ゴーズトークン" autocomplete="off">
     </div>
 
 ```
 <div class="form-row">
   <div>
     <label class="form-label">購入日時</label>
-    <input class="form-input" id="f-date" type="date" autocomplete="off">
+    <input class="form-input" id="f-date" type="text" placeholder="YYYY/MM/DD" autocomplete="off" inputmode="numeric">
   </div>
   <div>
     <label class="form-label">フリマアプリ</label>
@@ -728,7 +728,7 @@ async function handleImage(e) {
           contents: [{
             parts: [
               { inline_data: { mime_type: file.type, data: base64 } },
-              { text: 'この取引画面の画像から情報を抽出してください。JSONのみ返してください。バッククォートや説明文は一切不要です。形式: {"name":"商品名","date":"YYYY-MM-DD","app":"メルカリ","price":数値,"fee_amount":数値,"shipping":数値,"profit":数値,"delivery_method":"配送方法","item_id":"商品ID"} 不明な値はnullにしてください。' }
+              { text: 'これはフリマアプリ（メルカリ等）の取引完了画面です。以下のJSON形式のみで返してください。説明文やマークダウン不要。{"name":"商品名","date":"YYYY-MM-DD","app":"メルカリ","price":販売価格の数値,"fee_amount":販売手数料の数値,"shipping":送料の数値,"profit":販売利益の数値,"delivery_method":"配送方法","item_id":"商品ID"} 数値は整数。不明な項目はnull。' }
             ]
           }],
           generationConfig: { temperature: 0 }
@@ -748,7 +748,7 @@ async function handleImage(e) {
     console.log('Parsed:', p);
 
     if (p.name)               document.getElementById('f-name').value     = p.name;
-    if (p.date)               document.getElementById('f-date').value     = p.date;
+    if (p.date)               document.getElementById('f-date').value     = p.date.replace(/-/g, '/');
     if (p.app) {
       const sel = document.getElementById('f-app');
       // Try to match app name
@@ -788,7 +788,7 @@ async function saveItem() {
   const item = {
     id: Date.now().toString(),
     name,
-    date:            document.getElementById('f-date').value,
+    date:            document.getElementById('f-date').value.replace(/\//g, '-'),
     app:             document.getElementById('f-app').value,
     price:           +document.getElementById('f-price').value || 0,
     fee_amount:      +document.getElementById('f-fee').value || 0,
@@ -802,7 +802,8 @@ async function saveItem() {
     await dbInsert(item);
     toast('✅ 保存しました！');
     ['f-name','f-price','f-fee','f-shipping','f-profit','f-cost','f-delivery','f-item-id'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+    const today = new Date();
+document.getElementById('f-date').value = today.getFullYear() + '/' + String(today.getMonth()+1).padStart(2,'0') + '/' + String(today.getDate()).padStart(2,'0');
   } catch(e) {
     toast('保存に失敗しました: ' + e.message, 'error');
   }
@@ -880,7 +881,8 @@ function showAnalyzeComplete() {
 }
 
 // ── Init ──
-document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+const today = new Date();
+document.getElementById('f-date').value = today.getFullYear() + '/' + String(today.getMonth()+1).padStart(2,'0') + '/' + String(today.getDate()).padStart(2,'0');
 // Reset client to ensure fresh connection
 _sb = null;
 renderHome();
