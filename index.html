@@ -380,34 +380,43 @@ opacity: 0; transition: all 0.3s; pointer-events: none; white-space: nowrap; z-i
 
 <div class="toast" id="toast"></div>
 
-<script>
-// ======== 設定 ========
-// ここにご自身のSupabase情報を入力してください
-const SUPABASE_URL = localStorage.getItem('sb_url') || 'YOUR_SUPABASE_URL';
-const SUPABASE_KEY = localStorage.getItem('sb_key') || 'YOUR_SUPABASE_KEY';
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-// ======== Supabase API ========
-async function sbFetch(path, options = {}) {
-  const baseUrl = (localStorage.getItem('sb_url') || SUPABASE_URL).replace(/\/$/, '');
-  const key  = localStorage.getItem('sb_key') || SUPABASE_KEY;
-  const res = await fetch(baseUrl + path, {
-    ...options,
-    headers: {
-      'apikey': key,
-      'Authorization': 'Bearer ' + key,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation',
-      'X-Client-Info': 'supabase-js/2.0.0',
-      ...(options.headers || {})
-    }
-  });
-  if (!res.ok) { const e = await res.text(); throw new Error(e); }
-  return res.status === 204 ? null : res.json();
+<script>
+// ======== Supabase SDK ========
+let _supabase = null;
+
+function getClient() {
+  const url = (localStorage.getItem('sb_url') || '').replace(/\/$/, '');
+  const key = localStorage.getItem('sb_key') || '';
+  if (!url || !key) return null;
+  if (!_supabase) {
+    _supabase = window.supabase.createClient(url, key);
+  }
+  return _supabase;
 }
 
-const dbGetAll = () => sbFetch('/rest/v1/items?select=*&order=date.desc');
-const dbInsert = item => sbFetch('/rest/v1/items', { method: 'POST', body: JSON.stringify(item) });
-const dbDelete = id => sbFetch(`/rest/v1/items?id=eq.${id}`, { method: 'DELETE' });
+async function dbGetAll() {
+  const client = getClient();
+  if (!client) throw new Error('未設定');
+  const { data, error } = await client.from('items').select('*').order('date', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+async function dbInsert(item) {
+  const client = getClient();
+  if (!client) throw new Error('未設定');
+  const { error } = await client.from('items').insert(item);
+  if (error) throw error;
+}
+
+async function dbDelete(id) {
+  const client = getClient();
+  if (!client) throw new Error('未設定');
+  const { error } = await client.from('items').delete().eq('id', id);
+  if (error) throw error;
+}
 
 // ======== State ========
 let currentYear = new Date().getFullYear(), currentMonth = new Date().getMonth() + 1;
@@ -662,6 +671,7 @@ function saveSettings() {
   if (!url || !key) { toast('URLとキーを両方入力してください', 'error'); return; }
   localStorage.setItem('sb_url', url);
   localStorage.setItem('sb_key', key);
+  _supabase = null; // reset client
   toast('✅ 設定を保存しました！');
   renderSettings();
   renderHome();
