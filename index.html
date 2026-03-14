@@ -35,8 +35,9 @@ font-family: -apple-system, ‘Hiragino Sans’, sans-serif;
 background: var(–bg);
 color: var(–text);
 -webkit-font-smoothing: antialiased;
-height: 100%;
-overflow: hidden;
+min-height: 100dvh;
+padding-top: calc(52px + env(safe-area-inset-top) + 8px);
+padding-bottom: calc(var(–nav-h) + env(safe-area-inset-bottom) + 16px);
 }
 
 /* ── SPLASH ── */
@@ -48,19 +49,9 @@ opacity: 1; transition: opacity 0.7s ease;
 .splash.hide { opacity: 0; pointer-events: none; }
 .splash img { width: 100%; height: 110%; object-fit: cover; object-position: center top; display: block; }
 
-/* ── LAYOUT ── */
-.app-wrap {
-position: fixed;
-top: 0; left: 0; right: 0;
-bottom: 0;
-display: flex;
-flex-direction: column;
-}
-
 /* ── HEADER ── */
 .header {
-flex-shrink: 0;
-z-index: 200;
+position: fixed; top: 0; left: 0; right: 0; z-index: 200;
 background: rgba(255,255,255,0.97);
 backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
 border-bottom: 1px solid var(–border);
@@ -75,17 +66,9 @@ height: calc(var(–header-h) + env(safe-area-inset-top));
 .db-err  { color: var(–accent); border-color: rgba(255,107,53,0.4); background: rgba(255,107,53,0.08); }
 .db-wait { color: var(–muted);  border-color: var(–border); background: transparent; }
 
-/* ── SCROLL AREA ── */
-.scroll-area {
-flex: 1;
-overflow-y: auto;
--webkit-overflow-scrolling: touch;
-}
-
 /* ── NAV ── */
 .nav {
-flex-shrink: 0;
-z-index: 200;
+position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
 background: rgba(255,255,255,0.97);
 backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
 border-top: 1px solid var(–border);
@@ -173,38 +156,34 @@ background: none; border: none; font-size: 10px; color: var(–muted); font-fami
 
 <div class="splash" id="splash"><img src="splash.PNG" alt=""></div>
 
-<div class="app-wrap" id="app-wrap">
-
-  <header class="header">
+<header class="header">
     <img class="header-logo" src="logo.PNG" alt="決闘売上録">
     <span class="db-badge db-wait" id="db-status">接続中</span>
-  </header>
+</header>
 
-  <div class="scroll-area">
+<div class="page active" id="page-home">
+      <div class="month-nav">
+        <button class="month-btn" onclick="changeMonth(-1)">‹</button>
+        <span class="month-label" id="month-label"></span>
+        <button class="month-btn" onclick="changeMonth(1)">›</button>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card pink"><div class="stat-label">売上合計</div><div class="stat-value" id="total-sales">¥0</div></div>
+        <div class="stat-card mint"><div class="stat-label">純利益</div><div class="stat-value" id="total-profit">¥0</div></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">手数料合計</div><div class="stat-value" id="total-fee">¥0</div></div>
+        <div class="stat-card"><div class="stat-label">販売件数</div><div class="stat-value" id="month-count">0件</div></div>
+      </div>
+      <div class="card">
+        <div class="section-label">アプリ別</div>
+        <div id="app-breakdown"><div style="color:var(--muted);font-size:13px">データなし</div></div>
+      </div>
+      <div class="section-label" style="padding:0 4px">今月の販売記録</div>
+      <div id="item-list"><div class="empty"><div class="empty-icon">📦</div><div class="empty-text">まだ記録がありません<br>＋から追加してね</div></div></div>
+    </div>
 
 ```
-<div class="page active" id="page-home">
-  <div class="month-nav">
-    <button class="month-btn" onclick="changeMonth(-1)">‹</button>
-    <span class="month-label" id="month-label"></span>
-    <button class="month-btn" onclick="changeMonth(1)">›</button>
-  </div>
-  <div class="stats-grid">
-    <div class="stat-card pink"><div class="stat-label">売上合計</div><div class="stat-value" id="total-sales">¥0</div></div>
-    <div class="stat-card mint"><div class="stat-label">純利益</div><div class="stat-value" id="total-profit">¥0</div></div>
-  </div>
-  <div class="stats-grid">
-    <div class="stat-card"><div class="stat-label">手数料合計</div><div class="stat-value" id="total-fee">¥0</div></div>
-    <div class="stat-card"><div class="stat-label">販売件数</div><div class="stat-value" id="month-count">0件</div></div>
-  </div>
-  <div class="card">
-    <div class="section-label">アプリ別</div>
-    <div id="app-breakdown"><div style="color:var(--muted);font-size:13px">データなし</div></div>
-  </div>
-  <div class="section-label" style="padding:0 4px">今月の販売記録</div>
-  <div id="item-list"><div class="empty"><div class="empty-icon">📦</div><div class="empty-text">まだ記録がありません<br>＋から追加してね</div></div></div>
-</div>
-
 <div class="page" id="page-add">
   <div class="card">
     <div class="section-label" style="margin-bottom:12px">📸 取引画像から自動入力</div>
@@ -274,16 +253,12 @@ background: none; border: none; font-size: 10px; color: var(–muted); font-fami
 </div>
 ```
 
-  </div><!-- /scroll-area -->
-
-  <nav class="nav">
+<nav class="nav">
     <button class="nav-btn active" onclick="showPage('home',this)"><span class="nav-icon">🏠</span>ホーム</button>
     <button class="nav-btn" onclick="showPage('add',this)"><span class="nav-icon">＋</span>追加</button>
     <button class="nav-btn" onclick="showPage('chart',this)"><span class="nav-icon">📊</span>グラフ</button>
     <button class="nav-btn" onclick="showPage('settings',this)"><span class="nav-icon">⚙️</span>設定</button>
   </nav>
-
-</div><!-- /app-wrap -->
 
 <div class="toast" id="toast"></div>
 <div id="done-modal" class="modal">
@@ -339,7 +314,7 @@ function showPage(name, btn) {
   document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
   document.getElementById('page-' + name).classList.add('active');
   btn.classList.add('active');
-  document.querySelector('.scroll-area').scrollTop = 0;
+  window.scrollTo(0, 0);
   if (name === 'home')     renderHome();
   if (name === 'chart')    renderChart();
   if (name === 'settings') renderSettings();
