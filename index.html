@@ -413,7 +413,7 @@ function calcProfit() {
   const shipping=+document.getElementById('f-shipping').value||0;
   const cost=+document.getElementById('f-cost').value||0;
   const packing=document.getElementById('f-packing').value===''?10:(+document.getElementById('f-packing').value||0);
-  const fee=Math.round(price*(FEE_RATES[document.getElementById('f-app').value]||0.10));
+  const fee=Math.floor(price*(FEE_RATES[document.getElementById('f-app').value]||0.10));
   const profit=price-fee-shipping-cost-packing;
   document.getElementById('f-fee').value=fee;
   document.getElementById('f-profit').value=profit;
@@ -466,9 +466,9 @@ async function handleImage(e) {
     if(p.name){
       const bracket=p.name.match(/【([^】]+)】/);
       const kw=bracket?bracket[1]:'';
-      if(kw.includes('ポケ')||kw.includes('ポケモン')||kw.toLowerCase().includes('pokemon')){
-        document.getElementById('f-category').value='遊戯王';
-      } else if(kw.includes('遊戯王')||kw.toLowerCase().includes('yugioh')||kw.toLowerCase().includes('yu-gi-oh')){
+      if(kw==='ポケカ'){
+        document.getElementById('f-category').value='ポケモン';
+      } else if(kw==='遊戯王'){
         document.getElementById('f-category').value='遊戯王';
       } else {
         document.getElementById('f-category').value='その他';
