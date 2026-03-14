@@ -493,7 +493,7 @@ async function handleImage(e) {
           body: JSON.stringify({
             contents: [{ parts: [
               { inline_data: { mime_type: 'image/jpeg', data: jpegBase64 } },
-              { text: 'これはフリマアプリの取引画面です。JSONのみ返してください。{"name":"商品名","date":"YYYY-MM-DD","app":"メルカリ","price":数値,"fee_amount":数値,"shipping":数値,"profit":数値,"delivery_method":"配送方法","item_id":"商品ID"} 不明はnull。' }
+              { text: 'You are a data extraction assistant. Extract information from this Japanese flea market app transaction screenshot. Return ONLY a valid JSON object with no markdown, no backticks, no explanation. Use exactly this format: {"name":"item name in Japanese","date":"YYYY-MM-DD","app":"メルカリ","price":0,"fee_amount":0,"shipping":0,"profit":0,"delivery_method":"","item_id":""} Use null for unknown values.' }
             ]}],
             generationConfig: { temperature: 0, maxOutputTokens: 500 }
           })
