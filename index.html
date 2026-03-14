@@ -250,28 +250,28 @@ max-width: calc(100vw - 40px); text-align: center;
       </div>
       <div>
         <label class="form-label">フリマアプリ</label>
-        <select class="form-input" id="f-app" autocomplete="off">
+        <select class="form-input" id="f-app" autocomplete="off" onchange="calcProfit()">
           <option>メルカリ</option><option>ラクマ</option><option>ヤフオク</option><option>PayPayフリマ</option><option>その他</option>
         </select>
       </div>
     </div>
     <div class="form-row">
-      <div><label class="form-label">商品代金（円）</label><input class="form-input" id="f-price" type="number" placeholder="0" autocomplete="off"></div>
-      <div><label class="form-label">販売手数料（円）</label><input class="form-input" id="f-fee" type="number" placeholder="0" autocomplete="off"></div>
+      <div><label class="form-label">商品代金（円）</label><input class="form-input" id="f-price" type="number" placeholder="0" autocomplete="off" oninput="calcProfit()"></div>
+      <div><label class="form-label">配送料（円）</label><input class="form-input" id="f-shipping" type="number" placeholder="0" autocomplete="off" oninput="calcProfit()"></div>
     </div>
     <div class="form-row">
-      <div><label class="form-label">配送料（円）</label><input class="form-input" id="f-shipping" type="number" placeholder="0" autocomplete="off"></div>
-      <div><label class="form-label">販売利益（円）</label><input class="form-input" id="f-profit" type="number" placeholder="0" autocomplete="off"></div>
-    </div>
-    <div class="form-row">
-      <div><label class="form-label">仕入れ値（円）</label><input class="form-input" id="f-cost" type="number" placeholder="0" autocomplete="off"></div>
-      <div><label class="form-label">配送方法</label><input class="form-input" id="f-delivery" type="text" placeholder="ゆうゆうメルカリ便" autocomplete="off"></div>
+      <div><label class="form-label">仕入れ値（円）</label><input class="form-input" id="f-cost" type="number" placeholder="0" autocomplete="off" oninput="calcProfit()"></div>
+      <div>
+        <label class="form-label">販売手数料（円）</label>
+        <input class="form-input" id="f-fee" type="number" placeholder="自動計算" autocomplete="off" style="background:#f9f9fb" readonly>
+      </div>
     </div>
     <div class="form-group">
-      <label class="form-label">商品ID</label>
-      <input class="form-input" id="f-item-id" type="text" placeholder="m12345..." autocomplete="off">
+      <label class="form-label">販売利益（円）</label>
+      <div class="form-input" id="f-profit-display" style="background:#f0fdf9;color:#06a070;font-weight:700;font-size:18px;line-height:1.4">¥0</div>
+      <input type="hidden" id="f-profit">
     </div>
-    <button class="btn-save" onclick="saveItem()">Supabaseに保存する</button>
+    <button class="btn-save" onclick="saveItem()">保存</button>
   </div>
 </div>
 
@@ -524,8 +524,8 @@ async function handleImage(e) {
     if (p.fee_amount != null) document.getElementById('f-fee').value      = p.fee_amount;
     if (p.shipping != null)   document.getElementById('f-shipping').value = p.shipping;
     if (p.profit != null)     document.getElementById('f-profit').value   = p.profit;
-    if (p.delivery_method)    document.getElementById('f-delivery').value = p.delivery_method;
-    if (p.item_id)            document.getElementById('f-item-id').value  = p.item_id;
+    // delivery_method欄は削除済み
+    // item_id欄は削除済み
 
     const modal = document.getElementById('done-modal');
     modal.classList.add('show');
@@ -545,6 +545,23 @@ async function handleImage(e) {
   }
 }
 
+// ── 手数料率 ──
+const FEE_RATES = { 'メルカリ': 0.10, 'ラクマ': 0.06, 'ヤフオク': 0.10, 'PayPayフリマ': 0.05, 'その他': 0.10 };
+
+function calcProfit() {
+  const price    = +document.getElementById('f-price').value    || 0;
+  const shipping = +document.getElementById('f-shipping').value || 0;
+  const cost     = +document.getElementById('f-cost').value     || 0;
+  const app      = document.getElementById('f-app').value;
+  const rate     = FEE_RATES[app] || 0.10;
+  const fee      = Math.round(price * rate);
+  const profit   = price - fee - shipping - cost;
+  document.getElementById('f-fee').value = fee;
+  document.getElementById('f-profit').value = profit;
+  document.getElementById('f-profit-display').textContent = '¥' + profit.toLocaleString('ja-JP');
+  document.getElementById('f-profit-display').style.color = profit >= 0 ? '#06a070' : '#e63262';
+}
+
 // ── Save Item ──
 async function saveItem() {
   const name = document.getElementById('f-name').value.trim();
@@ -559,8 +576,8 @@ async function saveItem() {
     shipping:        +document.getElementById('f-shipping').value || 0,
     profit:          +document.getElementById('f-profit').value   || 0,
     cost:            +document.getElementById('f-cost').value     || 0,
-    delivery_method: document.getElementById('f-delivery').value,
-    item_id:         document.getElementById('f-item-id').value,
+    delivery_method: '',
+    item_id:         '',
   };
   try {
     await dbInsert(item);
