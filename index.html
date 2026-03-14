@@ -660,24 +660,21 @@ async function renderSettings() {
 // ── フッター固定（iOS PWA対策）──
 function fixNav() {
   var nav = document.querySelector('.nav');
-  // 画面の実際の一番下にフッターを固定
   nav.style.position = 'fixed';
   nav.style.bottom = '0px';
   nav.style.left = '0px';
   nav.style.right = '0px';
 }
 fixNav();
-// キーボード表示/非表示後も再固定
-window.addEventListener('focusin', function() {
-  setTimeout(fixNav, 300);
-});
 window.addEventListener('focusout', function() {
-  setTimeout(fixNav, 100);
+  // キーボードが完全に閉じるまで待ってから再固定
+  setTimeout(fixNav, 50);
+  setTimeout(fixNav, 200);
+  setTimeout(fixNav, 500);
 });
 if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', function() {
-    setTimeout(fixNav, 100);
-  });
+  window.visualViewport.addEventListener('resize', fixNav);
+  window.visualViewport.addEventListener('scroll', fixNav);
 }
 
 // ── Init ──
