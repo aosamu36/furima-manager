@@ -53,7 +53,19 @@ padding-right: 18px;
 padding-top: env(safe-area-inset-top);
 min-height: calc(52px + env(safe-area-inset-top));
 }
-.header-title { font-size: 17px; font-weight: 700; }
+.header-title {
+font-size: 18px; font-weight: 900;
+background: linear-gradient(180deg, #ffd700 0%, #ff9900 50%, #cc6600 100%);
+-webkit-background-clip: text; -webkit-text-fill-color: transparent;
+background-clip: text;
+letter-spacing: 2px;
+filter: drop-shadow(0 1px 3px rgba(255,180,0,0.4));
+}
+.header-logo {
+height: 32px; width: auto;
+object-fit: contain;
+filter: drop-shadow(0 1px 4px rgba(255,180,0,0.5));
+}
 .db-badge {
 font-size: 11px; font-weight: 600;
 padding: 3px 10px; border-radius: 20px; border: 1px solid;
@@ -228,6 +240,38 @@ margin-top: 10px; -webkit-appearance: none; appearance: none;
 /* CHART */
 .chart-wrap { position: relative; height: 220px; margin: 4px 0; }
 
+/* SPLASH */
+.splash {
+position: fixed; inset: 0; z-index: 999;
+background: #0a0510;
+display: flex; flex-direction: column;
+align-items: center; justify-content: center;
+transition: opacity 0.7s ease;
+overflow: hidden;
+}
+.splash.hide { opacity: 0; pointer-events: none; }
+.splash-bg {
+position: absolute; inset: 0;
+background: radial-gradient(ellipse at center, #2a1050 0%, #0a0510 70%);
+}
+.splash-char {
+position: relative; z-index: 1;
+width: 85vw; max-width: 360px;
+animation: splashIn 0.6s cubic-bezier(0.34,1.4,0.64,1) both;
+filter: drop-shadow(0 0 30px rgba(160,100,255,0.5));
+}
+.splash-logo {
+position: relative; z-index: 1;
+width: 88vw; max-width: 380px;
+margin-top: -20px;
+animation: splashIn 0.6s 0.15s cubic-bezier(0.34,1.4,0.64,1) both;
+filter: drop-shadow(0 0 20px rgba(255,180,0,0.6));
+}
+@keyframes splashIn {
+from { transform: scale(0.6); opacity: 0; }
+to   { transform: scale(1);   opacity: 1; }
+}
+
 /* TOAST */
 .toast {
 position: fixed;
@@ -262,8 +306,14 @@ transform: scale(0.85); transition: transform 0.25s;
 </head>
 <body>
 
+<div class="splash" id="splash">
+  <div class="splash-bg"></div>
+  <img class="splash-char" src="splash.webp" alt="">
+  <img class="splash-logo" src="logo.PNG" alt="決闘売上録">
+</div>
+
 <header class="header">
-  <div class="header-title">フリマ売上管理</div>
+  <img src="logo.PNG" alt="決闘売上録" class="header-logo">
   <span class="db-badge db-wait" id="db-status">接続中</span>
 </header>
 
@@ -740,6 +790,14 @@ async function renderSettings() {
     document.getElementById('settings-count').textContent = '件数：' + all.length + ' 件';
   } catch { document.getElementById('settings-count').textContent = '件数：接続エラー'; }
 }
+
+
+// Splash
+setTimeout(function() {
+  const s = document.getElementById('splash');
+  s.classList.add('hide');
+  setTimeout(function() { s.remove(); }, 700);
+}, 2000);
 
 // Init
 const _t = new Date();
