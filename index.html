@@ -15,6 +15,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { height: 100%; }
 
 :root {
 –accent: #ff6b35;
@@ -33,8 +34,7 @@ background: var(–bg);
 color: var(–text);
 -webkit-font-smoothing: antialiased;
 /* 画面全体をbodyで管理 */
-height: 100dvh;
-height: -webkit-fill-available;
+height: 100%;
 overflow: hidden;
 display: flex;
 flex-direction: column;
