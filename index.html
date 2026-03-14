@@ -51,7 +51,8 @@ pointer-events: auto;
 .splash img {
 position: absolute;
 top: 0; left: 0;
-width: 100%; height: 100%;
+width: 100%;
+height: calc(100% + env(safe-area-inset-top));
 object-fit: cover;
 object-position: center top;
 }
