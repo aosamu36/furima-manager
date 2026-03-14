@@ -83,10 +83,6 @@ background: rgba(255,255,255,0.97);
 backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
 border-top: 1px solid var(–border);
 display: flex;
-/* キーボード表示時もフッター固定 */
-bottom: constant(safe-area-inset-bottom);
-bottom: env(safe-area-inset-bottom);
-transform: translateZ(0);
 }
 .nav-btn {
 flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
@@ -659,6 +655,15 @@ async function renderSettings() {
     const all = await dbGetAll();
     document.getElementById('settings-count').textContent = '件数：' + all.length + ' 件';
   } catch { document.getElementById('settings-count').textContent = '件数：接続エラー'; }
+}
+
+// ── フッター固定（iOSキーボード対策）──
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', function() {
+    var nav = document.querySelector('.nav');
+    var offsetFromBottom = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
+    nav.style.bottom = Math.max(0, offsetFromBottom) + 'px';
+  });
 }
 
 // ── Init ──
