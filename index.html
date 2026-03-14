@@ -495,7 +495,8 @@ async function handleImage(e) {
               { inline_data: { mime_type: 'image/jpeg', data: jpegBase64 } },
               { text: 'You are a data extraction assistant. Extract information from this Japanese flea market app transaction screenshot. Return ONLY a valid JSON object with no markdown, no backticks, no explanation. Use exactly this format: {"name":"item name in Japanese","date":"YYYY-MM-DD","app":"メルカリ","price":0,"fee_amount":0,"shipping":0,"profit":0,"delivery_method":"","item_id":""} Use null for unknown values.' }
             ]}],
-            generationConfig: { temperature: 0, maxOutputTokens: 500 }
+            generationConfig: { temperature: 0, maxOutputTokens: 500 },
+            thinkingConfig: { thinkingBudget: 0 }
           })
         }
       );
@@ -506,9 +507,12 @@ async function handleImage(e) {
     }
 
     if (!data.candidates || !data.candidates[0]) throw new Error('レスポンス空');
-    const rawText = data.candidates[0].content.parts[0].text;
-    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('JSON解析失敗');
+    // thinking部分をスキップしてtextを取得
+    const allParts = data.candidates[0].content.parts;
+    const textPart = allParts.find(function(pt) { return pt.text && pt.text.includes('{'); });
+    if (!textPart) throw new Error('テキスト取得失敗');
+    const jsonMatch = textPart.text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('JSON解析失敗: ' + textPart.text.slice(0,60));
     const p = JSON.parse(jsonMatch[0]);
 
     if (p.name)            document.getElementById('f-name').value     = p.name;
