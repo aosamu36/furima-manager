@@ -117,6 +117,23 @@ body {
 .modal.show { opacity: 1; pointer-events: auto; }
 .modal-inner { background: #fff; border-radius: 20px; padding: 36px 48px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.2); transform: scale(0.85); transition: transform 0.25s; }
 .modal.show .modal-inner { transform: scale(1); }
+/* 明細モーダル */
+.detail-modal { position: fixed; inset: 0; z-index: 400; display: flex; align-items: flex-end; background: rgba(0,0,0,0.4); opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+.detail-modal.show { opacity: 1; pointer-events: auto; }
+.detail-sheet { background: #fff; border-radius: 20px 20px 0 0; width: 100%; max-height: 80vh; overflow-y: auto; padding-bottom: calc(env(safe-area-inset-bottom) + 16px); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32,0.72,0,1); box-shadow: 0 -4px 30px rgba(0,0,0,0.15); }
+.detail-modal.show .detail-sheet { transform: translateY(0); }
+.detail-handle { width: 36px; height: 4px; background: #e0e0e0; border-radius: 2px; margin: 12px auto 0; }
+.detail-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--border); }
+.detail-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.detail-row { display: flex; justify-content: space-between; align-items: center; padding: 13px 20px; border-bottom: 1px solid var(--border); }
+.detail-row:last-child { border-bottom: none; }
+.detail-label { font-size: 13px; color: var(--muted); }
+.detail-value { font-size: 15px; font-weight: 600; }
+.detail-value.green { color: var(--green); font-size: 18px; }
+.detail-value.red { color: #e63262; font-size: 18px; }
+.detail-footer { padding: 16px 20px 0; display: flex; gap: 10px; }
+.btn-delete { flex: 1; padding: 13px; background: #fff0f0; color: #e63262; border: 1px solid #ffd6d6; border-radius: 12px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.btn-close { flex: 1; padding: 13px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -226,6 +243,28 @@ body {
 </nav>
 
 <div class="toast" id="toast"></div>
+
+<!-- 明細モーダル -->
+
+<div class="detail-modal" id="detail-modal" onclick="closeDetail(event)">
+  <div class="detail-sheet">
+    <div class="detail-handle"></div>
+    <div class="detail-header">
+      <div class="detail-title" id="d-name"></div>
+      <span class="detail-app-badge" id="d-app-badge"></span>
+      <span style="font-size:12px;color:var(--muted);margin-left:6px" id="d-date"></span>
+    </div>
+    <div class="detail-row"><span class="detail-label">商品代金</span><span class="detail-value" id="d-price"></span></div>
+    <div class="detail-row"><span class="detail-label">販売手数料</span><span class="detail-value" id="d-fee"></span></div>
+    <div class="detail-row"><span class="detail-label">配送料</span><span class="detail-value" id="d-shipping"></span></div>
+    <div class="detail-row"><span class="detail-label">仕入れ値</span><span class="detail-value" id="d-cost"></span></div>
+    <div class="detail-row" style="background:#f8fffe"><span class="detail-label" style="font-weight:700">販売利益</span><span class="detail-value green" id="d-profit" style="font-size:18px"></span></div>
+    <div class="detail-footer">
+      <button class="btn-delete" id="d-delete-btn">🗑 削除</button>
+      <button class="btn-close" onclick="closeDetail()">閉じる</button>
+    </div>
+  </div>
+</div>
 <div id="done-modal" class="modal">
   <div class="modal-inner">
     <div style="font-size:36px;margin-bottom:8px">✅</div>
@@ -303,7 +342,7 @@ async function renderHome() {
       ? Object.entries(appMap).map(function(e){ return '<div class="app-row"><div style="font-size:14px;font-weight:600">'+e[0]+'</div><div style="text-align:right"><div style="font-size:14px;font-weight:700">'+fmt(e[1].sales)+'</div><div style="font-size:11px;color:var(--green)">利益 '+fmt(e[1].profit)+'</div></div></div>'; }).join('')
       : '<div style="color:var(--muted);font-size:13px">データなし</div>';
     document.getElementById('item-list').innerHTML = mi.length
-      ? mi.map(function(i){ const tc={メルカリ:'tag-mercari',ラクマ:'tag-rakuma',ヤフオク:'tag-yahoo','PayPayフリマ':'tag-paypay'}; const d=new Date(i.date); return '<div class="item-card"><div class="item-info"><div class="item-name">'+i.name+'</div><div class="item-sub"><span class="tag '+(tc[i.app]||'tag-other')+'">'+i.app+'</span>'+(d.getMonth()+1)+'/'+d.getDate()+'</div></div><div class="item-price"><div class="item-sale-val">'+fmt(+i.price||0)+'</div><div class="item-profit-val">+'+fmt(+i.profit||0)+'</div></div><button class="item-del" onclick="deleteItem(\''+i.id+'\')">🗑</button></div>'; }).join('')
+      ? mi.map(function(i){ const tc={メルカリ:'tag-mercari',ラクマ:'tag-rakuma',ヤフオク:'tag-yahoo','PayPayフリマ':'tag-paypay'}; const d=new Date(i.date); return '<div class="item-card" onclick="showDetail(this)" data-item=\''+JSON.stringify(i).replace(/'/g,"&#39;")+'\' style="cursor:pointer"><div class="item-info"><div class="item-name">'+i.name+'</div><div class="item-sub"><span class="tag '+(tc[i.app]||'tag-other')+'">'+i.app+'</span>'+(d.getMonth()+1)+'/'+d.getDate()+'</div></div><div class="item-price"><div class="item-sale-val">'+fmt(+i.price||0)+'</div><div class="item-profit-val">+'+fmt(+i.profit||0)+'</div></div></div>'; }).join('')
       : '<div class="empty"><div class="empty-icon">📦</div><div class="empty-text">まだ記録がありません<br>＋から追加してね</div></div>';
     st.textContent='DB ✓'; st.className='db-badge db-ok';
   } catch(e) {
@@ -316,6 +355,33 @@ async function deleteItem(id) {
   if(!confirm('この記録を削除しますか？')) return;
   try { await dbDelete(id); renderHome(); toast('削除しました'); }
   catch(e){ toast('削除に失敗しました','error'); }
+}
+
+function showDetail(el) {
+  const item = JSON.parse(el.getAttribute('data-item').replace(/&#39;/g,"'"));
+  const tc = {メルカリ:'tag-mercari',ラクマ:'tag-rakuma',ヤフオク:'tag-yahoo','PayPayフリマ':'tag-paypay'};
+  const d = new Date(item.date);
+  document.getElementById('d-name').textContent = item.name;
+  document.getElementById('d-app-badge').textContent = item.app;
+  document.getElementById('d-app-badge').className = 'detail-app-badge tag ' + (tc[item.app]||'tag-other');
+  document.getElementById('d-date').textContent = d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+  document.getElementById('d-price').textContent    = fmt(+item.price||0);
+  document.getElementById('d-fee').textContent      = fmt(+item.fee_amount||0);
+  document.getElementById('d-shipping').textContent = fmt(+item.shipping||0);
+  document.getElementById('d-cost').textContent     = fmt(+item.cost||0);
+  const profit = +item.profit||0;
+  document.getElementById('d-profit').textContent = fmt(profit);
+  document.getElementById('d-profit').className = 'detail-value ' + (profit >= 0 ? 'green' : 'red');
+  document.getElementById('d-delete-btn').onclick = function() {
+    closeDetail(); deleteItem(item.id);
+  };
+  document.getElementById('detail-modal').classList.add('show');
+}
+
+function closeDetail(e) {
+  if (!e || e.target === document.getElementById('detail-modal')) {
+    document.getElementById('detail-modal').classList.remove('show');
+  }
 }
 
 const FEE_RATES = {'メルカリ':0.10,'ラクマ':0.06,'ヤフオク':0.10,'PayPayフリマ':0.05,'その他':0.10};
