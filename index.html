@@ -667,10 +667,14 @@ function fixNav() {
 }
 fixNav();
 window.addEventListener('focusout', function() {
-  // キーボードが完全に閉じるまで待ってから再固定
-  setTimeout(fixNav, 50);
-  setTimeout(fixNav, 200);
-  setTimeout(fixNav, 500);
+  setTimeout(function() {
+    fixNav();
+    // スクロール位置をリセットしてレイアウトを再計算させる
+    window.scrollTo(0, window.scrollY + 1);
+    window.scrollTo(0, window.scrollY - 1);
+    fixNav();
+  }, 300);
+  setTimeout(fixNav, 600);
 });
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', fixNav);
