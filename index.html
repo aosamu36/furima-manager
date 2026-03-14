@@ -32,7 +32,7 @@ background: var(–bg);
 color: var(–text);
 min-height: 100dvh;
 padding-top: calc(52px + env(safe-area-inset-top) + 8px);
-padding-bottom: calc(var(–nav-h) + env(safe-area-inset-bottom) + 40px);
+padding-bottom: calc(var(–nav-h) + env(safe-area-inset-bottom) + 16px);
 -webkit-font-smoothing: antialiased;
 }
 
@@ -82,10 +82,6 @@ background: rgba(255,255,255,0.97);
 backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
 border-top: 1px solid var(–border);
 display: flex;
-/* iOSのvhバグ対策 */
-bottom: env(safe-area-inset-bottom, 0px);
-transform: translateZ(0);
--webkit-transform: translateZ(0);
 }
 .nav-btn {
 flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
@@ -634,15 +630,11 @@ document.getElementById('f-date').value = _now.getFullYear() + '/' + String(_now
 renderHome();
 
 // Splash
-(function() {
-  const s = document.getElementById('splash');
-  // PWAのvhバグ対策: window.screen.heightで物理サイズを直接指定
-  s.style.height = window.screen.height + 'px';
-  setTimeout(function() {
-    s.classList.add('hide');
-    setTimeout(function() { s.remove(); }, 800);
-  }, 2200);
-})();
+setTimeout(function() {
+  var s = document.getElementById('splash');
+  s.classList.add('hide');
+  setTimeout(function() { s.remove(); }, 800);
+}, 2200);
 </script>
 
 </body>
