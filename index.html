@@ -31,10 +31,22 @@ body {
 font-family: -apple-system, ‘Hiragino Sans’, sans-serif;
 background: var(–bg);
 color: var(–text);
-min-height: 100dvh;
-padding-top: calc(52px + env(safe-area-inset-top) + 8px);
-padding-bottom: calc(var(–nav-h) + env(safe-area-inset-bottom) + 16px);
 -webkit-font-smoothing: antialiased;
+/* 画面全体をbodyで管理 */
+height: 100dvh;
+height: -webkit-fill-available;
+overflow: hidden;
+display: flex;
+flex-direction: column;
+}
+
+/* スクロール可能なメインエリア */
+.main-scroll {
+flex: 1;
+overflow-y: auto;
+-webkit-overflow-scrolling: touch;
+padding-top: calc(52px + env(safe-area-inset-top) + 8px);
+padding-bottom: 24px;
 }
 
 /* ── SPLASH ── */
@@ -76,13 +88,14 @@ min-height: calc(52px + env(safe-area-inset-top));
 
 /* ── NAV ── */
 .nav {
-position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+flex-shrink: 0;
 height: calc(var(–nav-h) + env(safe-area-inset-bottom));
 padding-bottom: env(safe-area-inset-bottom);
 background: rgba(255,255,255,0.97);
 backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
 border-top: 1px solid var(–border);
 display: flex;
+z-index: 200;
 }
 .nav-btn {
 flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
@@ -92,7 +105,7 @@ background: none; border: none; font-size: 10px; color: var(–muted); font-fami
 .nav-icon { font-size: 22px; line-height: 1; }
 
 /* ── PAGE ── */
-.page { display: none; padding: 16px; padding-bottom: calc(var(–nav-h) + env(safe-area-inset-bottom) + 24px); }
+.page { display: none; padding: 16px; }
 .page.active { display: block; }
 
 /* ── CARD ── */
@@ -201,6 +214,8 @@ max-width: calc(100vw - 40px); text-align: center;
   <img class="header-logo" src="logo.PNG" alt="決闘売上録">
   <span class="db-badge db-wait" id="db-status">接続中</span>
 </header>
+
+<div class="main-scroll">
 
 <!-- HOME -->
 
@@ -317,6 +332,7 @@ max-width: calc(100vw - 40px); text-align: center;
 
 <!-- NAV -->
 
+</div>
 <nav class="nav">
   <button class="nav-btn active" onclick="showPage('home',this)"><span class="nav-icon">🏠</span>ホーム</button>
   <button class="nav-btn" onclick="showPage('add',this)"><span class="nav-icon">＋</span>追加</button>
@@ -657,29 +673,7 @@ async function renderSettings() {
   } catch { document.getElementById('settings-count').textContent = '件数：接続エラー'; }
 }
 
-// ── フッター固定（iOS PWA対策）──
-function fixNav() {
-  var nav = document.querySelector('.nav');
-  nav.style.position = 'fixed';
-  nav.style.bottom = '0px';
-  nav.style.left = '0px';
-  nav.style.right = '0px';
-}
-fixNav();
-window.addEventListener('focusout', function() {
-  setTimeout(function() {
-    fixNav();
-    // スクロール位置をリセットしてレイアウトを再計算させる
-    window.scrollTo(0, window.scrollY + 1);
-    window.scrollTo(0, window.scrollY - 1);
-    fixNav();
-  }, 300);
-  setTimeout(fixNav, 600);
-});
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', fixNav);
-  window.visualViewport.addEventListener('scroll', fixNav);
-}
+// フッターはflexレイアウトで自然に固定
 
 // ── Init ──
 const _now = new Date();
