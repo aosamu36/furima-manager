@@ -52,9 +52,9 @@ pointer-events: auto;
 .splash img {
 position: absolute;
 top: 0; left: 0;
-width: 100%; height: 100%;
+width: 100%; height: 110%;
 object-fit: cover;
-object-position: center center;
+object-position: center top;
 }
 
 /* ── HEADER ── */
@@ -629,17 +629,22 @@ const _now = new Date();
 document.getElementById('f-date').value = _now.getFullYear() + '/' + String(_now.getMonth()+1).padStart(2,'0') + '/' + String(_now.getDate()).padStart(2,'0');
 renderHome();
 
-// Splash - 実際の画面サイズを強制セット
+// Splash
 (function() {
   const s = document.getElementById('splash');
-  const setSize = function() {
-    s.style.width  = window.screen.width  + 'px';
-    s.style.height = window.screen.height + 'px';
-  };
-  setSize();
+  // bodyのスクロールを止める
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
   setTimeout(function() {
     s.classList.add('hide');
-    setTimeout(function() { s.remove(); }, 800);
+    setTimeout(function() {
+      s.remove();
+      // bodyのスクロールを戻す
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    }, 800);
   }, 2200);
 })();
 </script>
