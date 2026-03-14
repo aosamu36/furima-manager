@@ -565,7 +565,11 @@ function calcProfit() {
 // ── Save Item ──
 async function saveItem() {
   const name = document.getElementById('f-name').value.trim();
+  const date = document.getElementById('f-date').value.trim();
+  const price = +document.getElementById('f-price').value || 0;
   if (!name) { toast('商品名を入力してください', 'error'); return; }
+  if (!date) { toast('購入日時を入力してください', 'error'); return; }
+  if (!price) { toast('商品代金を入力してください', 'error'); return; }
   const item = {
     id: Date.now().toString(),
     name: name,
