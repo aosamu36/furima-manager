@@ -240,35 +240,7 @@ margin-top: 10px; -webkit-appearance: none; appearance: none;
 /* CHART */
 .chart-wrap { position: relative; height: 220px; margin: 4px 0; }
 
-/* SPLASH */
-.splash {
-position: fixed; inset: 0; z-index: 999;
-background: #0a0510;
-display: flex; flex-direction: column;
-align-items: center; justify-content: center;
-transition: opacity 0.7s ease;
-overflow: hidden;
-}
-.splash.hide { opacity: 0; pointer-events: none; }
-.splash-bg {
-position: absolute; inset: 0;
-background: radial-gradient(ellipse at center, #2a1050 0%, #0a0510 70%);
-}
-.splash-char {
-position: relative; z-index: 1;
-width: 85vw; max-width: 360px;
-animation: splashIn 0.6s cubic-bezier(0.34,1.4,0.64,1) both;
-filter: drop-shadow(0 0 30px rgba(160,100,255,0.5));
-}
-.splash-logo {
-position: relative; z-index: 1;
-width: 88vw; max-width: 380px;
-margin-top: -20px;
-animation: splashIn 0.6s 0.15s cubic-bezier(0.34,1.4,0.64,1) both;
-filter: drop-shadow(0 0 20px rgba(255,180,0,0.6));
-}
-@keyframes splashIn {
-from { transform: scale(0.6); opacity: 0; }
+6); opacity: 0; }
 to   { transform: scale(1);   opacity: 1; }
 }
 
@@ -307,9 +279,559 @@ transform: scale(0.85); transition: transform 0.25s;
 <body>
 
 <div class="splash" id="splash">
-  <div class="splash-bg"></div>
-  <img class="splash-char" src="splash.webp" alt="">
-  <img class="splash-logo" src="logo.PNG" alt="決闘売上録">
+  <img class="splash-img" src="splash.PNG" alt="">
+</div>
+
+<header class="header">
+  <img src="logo.PNG" alt="決闘売上録" class="header-logo">
+  <span class="db-badge db-wait" id="db-status">接続中</span>
+</header>
+
+<!-- HOME -->
+
+<div class="page active" id="page-home">
+  <div class="month-nav">
+    <button class="month-btn" onclick="changeMonth(-1)">‹</button>
+    <span class="month-label" id="month-label"></span>
+    <button class="month-btn" onclick="changeMonth(1)">›</button>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card pink">
+      <div class="stat-label">売上合計</div>
+      <div class="stat-value" id="total-sales">¥0</div>
+    </div>
+    <div class="stat-card mint">
+      <div class="stat-label">純利益</div>
+      <div class="stat-value" id="total-profit">¥0</div>
+    </div>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">手数料合計</div>
+      <div class="stat-value" id="total-fee">¥0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">販売件数</div>
+      <div class="stat-value" id="month-count">0件</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-label">アプリ別</div>
+    <div id="app-breakdown"><div style="color:var(--muted);font-size:13px">データなし</div></div>
+  </div>
+  <div class="section-label" style="padding:0 4px">今月の販売記録</div>
+  <div id="item-list">
+    <div class="empty">
+      <div class="empty-icon">📦</div>
+      <div class="empty-text">まだ記録がありません<br>＋から追加してね</div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD -->
+
+<div class="page" id="page-add">
+  <div class="card">
+    <div class="section-label" style="margin-bottom:12px">📸 取引画像から自動入力</div>
+    <div class="upload-area" id="upload-area" onclick="document.getElementById('img-input').click()">
+      <span id="upload-icon">📷</span>
+      <span id="upload-text">取引スクショをタップして選択</span>
+    </div>
+    <input type="file" accept="image/*" id="img-input" style="display:none" onchange="handleImage(event)">
+  </div>
+  <div class="card">
+    <div class="form-group">
+      <label class="form-label">商品名</label>
+      <input class="form-input" id="f-name" type="text" placeholder="例：遊戯王 ゴーズトークン" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <div class="form-row">
+      <div>
+        <label class="form-label">購入日時</label>
+        <input class="form-input" id="f-date" type="text" placeholder="2026/03/14" autocomplete="off" inputmode="numeric">
+      </div>
+      <div>
+        <label class="form-label">フリマアプリ</label>
+        <select class="form-input" id="f-app" autocomplete="off">
+          <option>メルカリ</option>
+          <option>ラクマ</option>
+          <option>ヤフオク</option>
+          <option>PayPayフリマ</option>
+          <option>その他</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label class="form-label">商品代金（円）</label>
+        <input class="form-input" id="f-price" type="number" placeholder="0" autocomplete="off">
+      </div>
+      <div>
+        <label class="form-label">販売手数料（円）</label>
+        <input class="form-input" id="f-fee" type="number" placeholder="0" autocomplete="off">
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label class="form-label">配送料（円）</label>
+        <input class="form-input" id="f-shipping" type="number" placeholder="0" autocomplete="off">
+      </div>
+      <div>
+        <label class="form-label">販売利益（円）</label>
+        <input class="form-input" id="f-profit" type="number" placeholder="0" autocomplete="off">
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label class="form-label">仕入れ値（円）</label>
+        <input class="form-input" id="f-cost" type="number" placeholder="0" autocomplete="off">
+      </div>
+      <div>
+        <label class="form-label">配送方法</label>
+        <input class="form-input" id="f-delivery" type="text" placeholder="ゆうゆうメルカリ便" autocomplete="off">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">商品ID</label>
+      <input class="form-input" id="f-item-id" type="text" placeholder="m12345..." autocomplete="off">
+    </div>
+    <button class="btn-save" onclick="saveItem()">Supabaseに保存する</button>
+  </div>
+</div>
+
+<!-- CHART -->
+
+<div class="page" id="page-chart">
+  <div class="card">
+    <div class="section-label">月別売上グラフ</div>
+    <div class="chart-wrap"><canvas id="sales-chart"></canvas></div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+
+<div class="page" id="page-settings">
+  <div class="card">
+    <div class="settings-title">Supabase 接続設定</div>
+    <p class="settings-info" style="margin-bottom:14px">URLとAPIキーを入力してください。一度設定すればこのデバイスに保存されます。</p>
+    <div class="form-group">
+      <label class="form-label">Project URL</label>
+      <input class="form-input" id="s-url" type="text" placeholder="https://xxxx.supabase.co" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Publishable (anon) Key</label>
+      <input class="form-input" id="s-key" type="text" placeholder="sb_publishable_..." autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Gemini API Key（画像解析用）</label>
+      <input class="form-input" id="s-gemini" type="password" placeholder="AIza..." autocomplete="off">
+      <div style="margin-top:6px">
+        <a class="settings-link" href="https://aistudio.google.com/apikey" target="_blank" style="font-size:12px">→ Google AI Studioで無料取得</a>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="saveSettings()">設定を保存する</button>
+  </div>
+  <div class="card">
+    <div class="settings-title">DB情報</div>
+    <div class="settings-info">
+      <div id="settings-url" style="word-break:break-all;margin-bottom:4px"></div>
+      <div id="settings-count">件数：-</div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+
+<nav class="nav">
+  <button class="nav-btn active" id="nav-home" onclick="showPage('home',this)"><span class="nav-icon">🏠</span>ホーム</button>
+  <button class="nav-btn" id="nav-add" onclick="showPage('add',this)"><span class="nav-icon">＋</span>追加</button>
+  <button class="nav-btn" id="nav-chart" onclick="showPage('chart',this)"><span class="nav-icon">📊</span>グラフ</button>
+  <button class="nav-btn" id="nav-settings" onclick="showPage('settings',this)"><span class="nav-icon">⚙️</span>設定</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+<div id="done-modal" class="modal">
+  <div class="modal-inner">
+    <div style="font-size:36px;margin-bottom:8px">✅</div>
+    <div style="font-size:16px;font-weight:700">解析完了！</div>
+    <div style="font-size:13px;color:#8e8e93;margin-top:4px">内容を確認してください</div>
+  </div>
+</div>
+
+<script>
+// Supabase
+let _sb = null;
+function getClient() {
+  const url = (localStorage.getItem('sb_url') || '').replace(/\/$/, '');
+  const key = localStorage.getItem('sb_key') || '';
+  if (!url || !key) return null;
+  if (!_sb) _sb = window.supabase.createClient(url, key);
+  return _sb;
+}
+async function dbGetAll() {
+  const c = getClient(); if (!c) throw new Error('未設定');
+  const { data, error } = await c.from('items').select('*').order('date', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+async function dbInsert(item) {
+  const c = getClient(); if (!c) throw new Error('未設定');
+  const { error } = await c.from('items').insert(item);
+  if (error) throw error;
+}
+async function dbDelete(id) {
+  const c = getClient(); if (!c) throw new Error('未設定');
+  const { error } = await c.from('items').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// State
+let curYear = new Date().getFullYear(), curMonth = new Date().getMonth() + 1;
+let chartInst = null;
+const fmt = n => '¥' + Math.round(n).toLocaleString('ja-JP');
+
+// Toast
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast ' + type + ' show';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// Nav
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'home') renderHome();
+  if (name === 'chart') renderChart();
+  if (name === 'settings') renderSettings();
+}
+
+function changeMonth(d) {
+  curMonth += d;
+  if (curMonth > 12) { curMonth = 1; curYear++; }
+  if (curMonth < 1)  { curMonth = 12; curYear--; }
+  renderHome();
+}
+
+// Home
+async function renderHome() {
+  document.getElementById('month-label').textContent = curYear + '年' + curMonth + '月';
+  const st = document.getElementById('db-status');
+  st.textContent = '接続中'; st.className = 'db-badge db-wait';
+  try {
+    const all = await dbGetAll();
+    const mi = all.filter(i => {
+      const d = new Date(i.date);
+      return d.getFullYear() === curYear && d.getMonth() + 1 === curMonth;
+    });
+    document.getElementById('total-sales').textContent  = fmt(mi.reduce((s,i) => s + (+i.price||0), 0));
+    document.getElementById('total-profit').textContent = fmt(mi.reduce((s,i) => s + (+i.profit||0), 0));
+    document.getElementById('total-fee').textContent    = fmt(mi.reduce((s,i) => s + (+i.fee_amount||0), 0));
+    document.getElementById('month-count').textContent  = mi.length + '件';
+
+    const appMap = {};
+    mi.forEach(i => {
+      if (!appMap[i.app]) appMap[i.app] = {sales:0, profit:0};
+      appMap[i.app].sales  += +i.price || 0;
+      appMap[i.app].profit += +i.profit || 0;
+    });
+    const bd = document.getElementById('app-breakdown');
+    if (Object.keys(appMap).length) {
+      bd.innerHTML = Object.entries(appMap).map(function(e) {
+        return '<div class="app-row"><div class="app-name">' + e[0] + '</div><div><div class="app-sale">' + fmt(e[1].sales) + '</div><div class="app-profit">利益 ' + fmt(e[1].profit) + '</div></div></div>';
+      }).join('');
+    } else {
+      bd.innerHTML = '<div style="color:var(--muted);font-size:13px">データなし</div>';
+    }
+
+    const listEl = document.getElementById('item-list');
+    if (!mi.length) {
+      listEl.innerHTML = '<div class="empty"><div class="empty-icon">📦</div><div class="empty-text">まだ記録がありません<br>＋から追加してね</div></div>';
+    } else {
+      listEl.innerHTML = mi.map(function(i) {
+        const tagCls = i.app==='メルカリ'?'tag-mercari':i.app==='ラクマ'?'tag-rakuma':i.app==='ヤフオク'?'tag-yahoo':i.app==='PayPayフリマ'?'tag-paypay':'tag-other';
+        const d = new Date(i.date);
+        return '<div class="item-card"><div class="item-info"><div class="item-name">' + i.name + '</div><div class="item-sub"><span class="tag ' + tagCls + '">' + i.app + '</span>' + (d.getMonth()+1) + '/' + d.getDate() + '</div></div><div class="item-price"><div class="item-sale-val">' + fmt(+i.price||0) + '</div><div class="item-profit-val">+' + fmt(+i.profit||0) + '</div></div><button class="item-del" onclick="deleteItem(\'' + i.id + '\')">🗑</button></div>';
+      }).join('');
+    }
+    st.textContent = 'DB ✓'; st.className = 'db-badge db-ok';
+  } catch(e) {
+    st.textContent = 'エラー'; st.className = 'db-badge db-err';
+    document.getElementById('item-list').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">接続エラー<br>⚙️設定を確認してください</div></div>';
+  }
+}
+
+async function deleteItem(id) {
+  if (!confirm('この記録を削除しますか？')) return;
+  try { await dbDelete(id); renderHome(); toast('削除しました'); }
+  catch(e) { toast('削除に失敗しました', 'error'); }
+}
+
+// Image Analysis
+async function handleImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+
+  const geminiKey = localStorage.getItem('gemini_key') || '';
+  if (!geminiKey) {
+    toast('⚙️設定からGemini APIキーを入力してください', 'error');
+    return;
+  }
+
+  const area = document.getElementById('upload-area');
+  area.classList.add('analyzing');
+  document.getElementById('upload-icon').innerHTML = '<span class="spinner"></span>';
+  document.getElementById('upload-text').textContent = 'AI解析中...';
+
+  try {
+    // canvas経由でJPEGに変換（HEIC対応）
+    const jpegBase64 = await new Promise(function(res, rej) {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const max = 1200;
+        let w = img.width, h = img.height;
+        if (w > max || h > max) {
+          if (w > h) { h = Math.round(h * max / w); w = max; }
+          else { w = Math.round(w * max / h); h = max; }
+        }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        res(canvas.toDataURL('image/jpeg', 0.85).split(',')[1]);
+      };
+      img.onerror = function() { rej(new Error('画像読み込み失敗')); };
+      img.src = url;
+    });
+
+    // リトライ付きfetch
+    let data;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      if (attempt > 1) {
+        document.getElementById('upload-text').textContent = '再試行中... (' + attempt + '/3)';
+        await new Promise(function(r) { setTimeout(r, 3000 * attempt); });
+      }
+      const res = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + geminiKey,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { inline_data: { mime_type: 'image/jpeg', data: jpegBase64 } },
+                { text: 'これはフリマアプリの取引画面です。JSONのみ返してください。{"name":"商品名","date":"YYYY-MM-DD","app":"メルカリ","price":数値,"fee_amount":数値,"shipping":数値,"profit":数値,"delivery_method":"配送方法","item_id":"商品ID"} 不明はnull。' }
+              ]
+            }],
+            generationConfig: { temperature: 0, maxOutputTokens: 500 }
+          })
+        }
+      );
+      data = await res.json();
+      if (!data.error) break;
+      if (data.error.code === 429 && attempt < 3) continue;
+      throw new Error('APIエラー: ' + data.error.message);
+    }
+
+    if (!data.candidates || !data.candidates[0]) throw new Error('レスポンス空');
+    const rawText = data.candidates[0].content.parts[0].text;
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('JSON解析失敗');
+    const p = JSON.parse(jsonMatch[0]);
+
+    if (p.name)            document.getElementById('f-name').value     = p.name;
+    if (p.date)            document.getElementById('f-date').value     = p.date.replace(/-/g, '/');
+    if (p.app) {
+      const keys = ['メルカリ','ラクマ','ヤフオク','PayPayフリマ'];
+      const sel = document.getElementById('f-app');
+      sel.value = keys.find(function(k) { return p.app.includes(k); }) || 'メルカリ';
+    }
+    if (p.price != null)      document.getElementById('f-price').value    = p.price;
+    if (p.fee_amount != null) document.getElementById('f-fee').value      = p.fee_amount;
+    if (p.shipping != null)   document.getElementById('f-shipping').value = p.shipping;
+    if (p.profit != null)     document.getElementById('f-profit').value   = p.profit;
+    if (p.delivery_method)    document.getElementById('f-delivery').value = p.delivery_method;
+    if (p.item_id)            document.getElementById('f-item-id').value  = p.item_id;
+
+    // 完了モーダル
+    const modal = document.getElementById('done-modal');
+    modal.classList.add('show');
+    setTimeout(function() { modal.classList.remove('show'); }, 2500);
+
+  } catch(err) {
+    const m = err.message || '不明なエラー';
+    if (m.includes('quota') || m.includes('RESOURCE_EXHAUSTED') || m.includes('429')) {
+      toast('レート制限中。しばらく待ってから再試行してください', 'error');
+    } else {
+      toast('解析失敗: ' + m.slice(0, 60), 'error');
+    }
+  } finally {
+    area.classList.remove('analyzing');
+    document.getElementById('upload-icon').textContent = '📷';
+    document.getElementById('upload-text').textContent = '取引スクショをタップして選択';
+  }
+}
+
+// Save Item
+async function saveItem() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { toast('商品名を入力してください', 'error'); return; }
+  const item = {
+    id: Date.now().toString(),
+    name: name,
+    date: document.getElementById('f-date').value.replace(/\//g, '-'),
+    app: document.getElementById('f-app').value,
+    price:           +document.getElementById('f-price').value || 0,
+    fee_amount:      +document.getElementById('f-fee').value || 0,
+    shipping:        +document.getElementById('f-shipping').value || 0,
+    profit:          +document.getElementById('f-profit').value || 0,
+    cost:            +document.getElementById('f-cost').value || 0,
+    delivery_method: document.getElementById('f-delivery').value,
+    item_id:         document.getElementById('f-item-id').value,
+  };
+  try {
+    await dbInsert(item);
+    toast('✅ 保存しました！');
+    ['f-name','f-price','f-fee','f-shipping','f-profit','f-cost','f-delivery','f-item-id'].forEach(function(id) {
+      document.getElementById(id).value = '';
+    });
+    const t = new Date();
+    document.getElementById('f-date').value = t.getFullYear() + '/' + String(t.getMonth()+1).padStart(2,'0') + '/' + String(t.getDate()).padStart(2,'0');
+  } catch(e) {
+    toast('保存失敗: ' + e.message, 'error');
+  }
+}
+
+// Chart
+async function renderChart() {
+  try {
+    const all = await dbGetAll();
+    const monthly = {};
+    all.forEach(function(i) {
+      const d = new Date(i.date);
+      const key = d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0');
+      if (!monthly[key]) monthly[key] = {sales:0, profit:0};
+      monthly[key].sales  += +i.price || 0;
+      monthly[key].profit += +i.profit || 0;
+    });
+    const labels = Object.keys(monthly).sort().slice(-6);
+    const ctx = document.getElementById('sales-chart').getContext('2d');
+    if (chartInst) chartInst.destroy();
+    chartInst = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          { label:'売上', data: labels.map(function(k){return monthly[k].sales;}),  backgroundColor:'rgba(255,107,53,0.7)' },
+          { label:'利益', data: labels.map(function(k){return monthly[k].profit;}), backgroundColor:'rgba(6,214,160,0.7)' }
+        ]
+      },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'top' } } }
+    });
+  } catch(e) { toast('グラフ取得失敗', 'error'); }
+}
+
+// Settings
+function saveSettings() {
+  const url    = document.getElementById('s-url').value.trim();
+  const key    = document.getElementById('s-key').value.trim();
+  const gemini = document.getElementById('s-gemini').value.trim();
+  if (!url || !key) { toast('URLとキーを入力してください', 'error'); return; }
+  localStorage.setItem('sb_url', url);
+  localStorage.setItem('sb_key', key);
+  if (gemini) localStorage.setItem('gemini_key', gemini);
+  _sb = null;
+  toast('✅ 設定を保存しました');
+  renderSettings();
+  renderHome();
+}
+async function renderSettings() {
+  document.getElementById('s-url').value    = localStorage.getItem('sb_url') || '';
+  document.getElementById('s-key').value    = localStorage.getItem('sb_key') || '';
+  document.getElementById('s-gemini').value = localStorage.getItem('gemini_key') || '';
+  document.getElementById('settings-url').textContent = localStorage.getItem('sb_url') || '未設定';
+  try {
+    const all = await dbGetAll();
+    document.getElementById('settings-count').textContent = '件数：' + all.length + ' 件';
+  } catch { document.getElementById('settings-count').textContent = '件数：接続エラー'; }
+}
+
+
+// Splash
+setTimeout(function() {
+  const s = document.getElementById('splash');
+  s.classList.add('hide');
+  setTimeout(function() { s.remove(); }, 700);
+}, 2000);
+
+// Init
+const _t = new Date();
+document.getElementById('f-date').value = _t.getFullYear() + '/' + String(_t.getMonth()+1).padStart(2,'0') + '/' + String(_t.getDate()).padStart(2,'0');
+_sb = null;
+renderHome();
+</script>
+
+</body>
+</html>/* SPLASH */
+.splash {
+  position: fixed; inset: 0; z-index: 999;
+  background: #000;
+  transition: opacity 0.7s ease;
+  overflow: hidden;
+  animation: splashFadeIn 0.5s ease both;
+}
+.splash.hide { opacity: 0; pointer-events: none; }
+.splash-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+@keyframes splashFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* TOAST */
+.toast {
+position: fixed;
+bottom: calc(var(–nav-h) + env(safe-area-inset-bottom) + 12px);
+left: 50%; transform: translateX(-50%) translateY(8px);
+background: #333; color: #fff; border-radius: 10px;
+padding: 10px 18px; font-size: 13px; font-weight: 600;
+opacity: 0; transition: all 0.25s; pointer-events: none;
+white-space: nowrap; z-index: 300;
+max-width: calc(100vw - 40px); text-align: center;
+}
+.toast.error { background: #e63262; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* MODAL */
+.modal {
+position: fixed; inset: 0; z-index: 400;
+display: flex; align-items: center; justify-content: center;
+background: rgba(0,0,0,0.35);
+opacity: 0; pointer-events: none; transition: opacity 0.25s;
+}
+.modal.show { opacity: 1; pointer-events: auto; }
+.modal-inner {
+background: #fff; border-radius: 20px;
+padding: 36px 48px; text-align: center;
+box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+transform: scale(0.85); transition: transform 0.25s;
+}
+.modal.show .modal-inner { transform: scale(1); }
+</style>
+
+</head>
+<body>
+
+<div class="splash" id="splash">
+  <img class="splash-img" src="splash.PNG" alt="">
 </div>
 
 <header class="header">
