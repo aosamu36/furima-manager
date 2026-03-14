@@ -629,12 +629,19 @@ const _now = new Date();
 document.getElementById('f-date').value = _now.getFullYear() + '/' + String(_now.getMonth()+1).padStart(2,'0') + '/' + String(_now.getDate()).padStart(2,'0');
 renderHome();
 
-// Splash
-setTimeout(function() {
+// Splash - 実際の画面サイズを強制セット
+(function() {
   const s = document.getElementById('splash');
-  s.classList.add('hide');
-  setTimeout(function() { s.remove(); }, 800);
-}, 2200);
+  const setSize = function() {
+    s.style.width  = window.screen.width  + 'px';
+    s.style.height = window.screen.height + 'px';
+  };
+  setSize();
+  setTimeout(function() {
+    s.classList.add('hide');
+    setTimeout(function() { s.remove(); }, 800);
+  }, 2200);
+})();
 </script>
 
 </body>
