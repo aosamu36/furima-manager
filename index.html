@@ -657,12 +657,26 @@ async function renderSettings() {
   } catch { document.getElementById('settings-count').textContent = '件数：接続エラー'; }
 }
 
-// ── フッター固定（iOSキーボード対策）──
+// ── フッター固定（iOS PWA対策）──
+function fixNav() {
+  var nav = document.querySelector('.nav');
+  // 画面の実際の一番下にフッターを固定
+  nav.style.position = 'fixed';
+  nav.style.bottom = '0px';
+  nav.style.left = '0px';
+  nav.style.right = '0px';
+}
+fixNav();
+// キーボード表示/非表示後も再固定
+window.addEventListener('focusin', function() {
+  setTimeout(fixNav, 300);
+});
+window.addEventListener('focusout', function() {
+  setTimeout(fixNav, 100);
+});
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', function() {
-    var nav = document.querySelector('.nav');
-    var offsetFromBottom = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
-    nav.style.bottom = Math.max(0, offsetFromBottom) + 'px';
+    setTimeout(fixNav, 100);
   });
 }
 
