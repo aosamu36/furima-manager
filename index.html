@@ -524,8 +524,8 @@ async function handleImage(e) {
     if (p.fee_amount != null) document.getElementById('f-fee').value      = p.fee_amount;
     if (p.shipping != null)   document.getElementById('f-shipping').value = p.shipping;
     if (p.profit != null)     document.getElementById('f-profit').value   = p.profit;
-    // delivery_method欄は削除済み
-    // item_id欄は削除済み
+    // delivery_method・item_id欄は削除済み
+    calcProfit();
 
     const modal = document.getElementById('done-modal');
     modal.classList.add('show');
@@ -586,9 +586,13 @@ async function saveItem() {
   try {
     await dbInsert(item);
     toast('✅ 保存しました！');
-    ['f-name','f-price','f-fee','f-shipping','f-profit','f-cost','f-delivery','f-item-id'].forEach(function(id) {
+    ['f-name','f-price','f-shipping','f-cost'].forEach(function(id) {
       document.getElementById(id).value = '';
     });
+    document.getElementById('f-fee').value = 0;
+    document.getElementById('f-profit').value = 0;
+    document.getElementById('f-profit-display').textContent = '¥0';
+    document.getElementById('f-profit-display').style.color = '#06a070';;
     const t = new Date();
     document.getElementById('f-date').value = t.getFullYear() + '/' + String(t.getMonth()+1).padStart(2,'0') + '/' + String(t.getDate()).padStart(2,'0');
   } catch(e) { toast('保存失敗: ' + e.message, 'error'); }
