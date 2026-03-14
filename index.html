@@ -34,7 +34,7 @@ background: var(–bg);
 color: var(–text);
 -webkit-font-smoothing: antialiased;
 /* 画面全体をbodyで管理 */
-height: 100%;
+height: 100vh;
 overflow: hidden;
 display: flex;
 flex-direction: column;
@@ -674,6 +674,13 @@ async function renderSettings() {
 }
 
 // フッターはflexレイアウトで自然に固定
+
+// ── PWA高さ修正 ──
+function setPwaHeight() {
+  document.body.style.height = window.innerHeight + 'px';
+}
+setPwaHeight();
+window.addEventListener('resize', setPwaHeight);
 
 // ── Init ──
 const _now = new Date();
