@@ -679,7 +679,9 @@ async function renderSettings() {
 function setPwaHeight() {
   document.body.style.height = window.innerHeight + 'px';
 }
-setPwaHeight();
+// 起動直後は不正確なので少し待ってから取得
+setTimeout(setPwaHeight, 100);
+setTimeout(setPwaHeight, 500);
 window.addEventListener('resize', setPwaHeight);
 
 // ── Init ──
