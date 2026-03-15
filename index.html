@@ -626,6 +626,9 @@ renderHome();
 setTimeout(function(){
   var s=document.getElementById('splash');
   s.classList.add('hide');
+  // スプラッシュが消えるタイミングでviewportを再計算させる
+  window.scrollTo(0,1);
+  setTimeout(function(){ window.scrollTo(0,0); },50);
   setTimeout(function(){s.remove();},800);
 },2200);
 </script>
