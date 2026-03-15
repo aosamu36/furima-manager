@@ -216,9 +216,26 @@ body.modal-open { overflow: hidden; }
 </div>
 
 <div class="page" id="page-chart">
-  <div class="card">
-    <div class="section-label">月別売上グラフ</div>
-    <div class="chart-wrap"><canvas id="sales-chart"></canvas></div>
+  <!-- タブ -->
+  <div class="chart-tabs">
+    <button class="chart-tab active" onclick="switchChart('monthly',this)">月別</button>
+    <button class="chart-tab" onclick="switchChart('yearly',this)">年別</button>
+    <button class="chart-tab" onclick="switchChart('trend',this)">推移</button>
+  </div>
+  <!-- 月別 -->
+  <div class="card chart-panel active" id="chart-monthly">
+    <div class="section-label">月別売上・利益</div>
+    <div class="chart-wrap"><canvas id="chart-monthly-canvas"></canvas></div>
+  </div>
+  <!-- 年別 -->
+  <div class="card chart-panel" id="chart-yearly">
+    <div class="section-label">年別売上・利益</div>
+    <div class="chart-wrap"><canvas id="chart-yearly-canvas"></canvas></div>
+  </div>
+  <!-- 推移 -->
+  <div class="card chart-panel" id="chart-trend">
+    <div class="section-label">利益推移（折れ線）</div>
+    <div class="chart-wrap"><canvas id="chart-trend-canvas"></canvas></div>
   </div>
 </div>
 
@@ -276,7 +293,7 @@ body.modal-open { overflow: hidden; }
     </div>
   </div>
 </div>
-<div id="done-modal" class="modal">
+<div id="done-modal" class="modal" onclick="const m=this;clearTimeout(m._t);m.classList.remove('show')">
   <div class="modal-inner">
     <div style="font-size:36px;margin-bottom:8px">✅</div>
     <div style="font-size:16px;font-weight:700">解析完了！</div>
@@ -310,7 +327,6 @@ async function dbDelete(id) {
 }
 
 let curYear = new Date().getFullYear(), curMonth = new Date().getMonth() + 1;
-let chartInst = null;
 const fmt = n => '¥' + Math.round(n).toLocaleString('ja-JP');
 
 function toast(msg, type) {
@@ -476,7 +492,8 @@ async function handleImage(e) {
     }
     calcProfit();
     const modal=document.getElementById('done-modal');
-    modal.classList.add('show'); setTimeout(function(){modal.classList.remove('show');},2500);
+    modal.classList.add('show');
+    modal._t = setTimeout(function(){modal.classList.remove('show');},2500);
   } catch(err){
     const m=err.message||'不明なエラー';
     toast(m.includes('quota')||m.includes('429')?'レート制限中。しばらく待ってください':'解析失敗: '+m.slice(0,60),'error');
@@ -511,14 +528,94 @@ async function saveItem() {
   } catch(e){toast('保存失敗: '+e.message,'error');}
 }
 
+let chartInsts = {};
+function destroyChart(key) { if(chartInsts[key]){chartInsts[key].destroy();delete chartInsts[key];} }
+
+function switchChart(type, btn) {
+  document.querySelectorAll('.chart-tab').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('.chart-panel').forEach(function(p){p.classList.remove('active');});
+  btn.classList.add('active');
+  document.getElementById('chart-'+type).classList.add('active');
+  if(type==='monthly') renderMonthly();
+  if(type==='yearly')  renderYearly();
+  if(type==='trend')   renderTrend();
+}
+
 async function renderChart() {
+  renderMonthly();
+}
+
+async function renderMonthly() {
   try {
-    const all=await dbGetAll(); const monthly={};
-    all.forEach(function(i){const d=new Date(i.date);const key=d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0');if(!monthly[key])monthly[key]={sales:0,profit:0};monthly[key].sales+=+i.price||0;monthly[key].profit+=+i.profit||0;});
-    const labels=Object.keys(monthly).sort().slice(-6);
-    const ctx=document.getElementById('sales-chart').getContext('2d');
-    if(chartInst)chartInst.destroy();
-    chartInst=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'売上',data:labels.map(function(k){return monthly[k].sales;}),backgroundColor:'rgba(255,107,53,0.7)'},{label:'利益',data:labels.map(function(k){return monthly[k].profit;}),backgroundColor:'rgba(6,214,160,0.7)'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}}}});
+    const all=await dbGetAll();
+    const monthly={};
+    all.forEach(function(i){
+      const d=new Date(i.date);
+      const key=d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0');
+      if(!monthly[key])monthly[key]={sales:0,profit:0};
+      monthly[key].sales+=+i.price||0;
+      monthly[key].profit+=+i.profit||0;
+    });
+    const labels=Object.keys(monthly).sort().slice(-12);
+    destroyChart('monthly');
+    const ctx=document.getElementById('chart-monthly-canvas').getContext('2d');
+    chartInsts['monthly']=new Chart(ctx,{
+      type:'bar',
+      data:{labels,datasets:[
+        {label:'売上',data:labels.map(function(k){return monthly[k].sales;}),backgroundColor:'rgba(255,107,53,0.75)',borderRadius:4},
+        {label:'利益',data:labels.map(function(k){return monthly[k].profit;}),backgroundColor:'rgba(6,214,160,0.75)',borderRadius:4}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{ticks:{callback:function(v){return '¥'+v.toLocaleString();}}}}}
+    });
+  } catch(e){toast('グラフ取得失敗','error');}
+}
+
+async function renderYearly() {
+  try {
+    const all=await dbGetAll();
+    const yearly={};
+    all.forEach(function(i){
+      const key=new Date(i.date).getFullYear()+'年';
+      if(!yearly[key])yearly[key]={sales:0,profit:0};
+      yearly[key].sales+=+i.price||0;
+      yearly[key].profit+=+i.profit||0;
+    });
+    const labels=Object.keys(yearly).sort();
+    destroyChart('yearly');
+    const ctx=document.getElementById('chart-yearly-canvas').getContext('2d');
+    chartInsts['yearly']=new Chart(ctx,{
+      type:'bar',
+      data:{labels,datasets:[
+        {label:'売上',data:labels.map(function(k){return yearly[k].sales;}),backgroundColor:'rgba(255,107,53,0.75)',borderRadius:6},
+        {label:'利益',data:labels.map(function(k){return yearly[k].profit;}),backgroundColor:'rgba(6,214,160,0.75)',borderRadius:6}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{ticks:{callback:function(v){return '¥'+v.toLocaleString();}}}}}
+    });
+  } catch(e){toast('グラフ取得失敗','error');}
+}
+
+async function renderTrend() {
+  try {
+    const all=await dbGetAll();
+    const monthly={};
+    all.forEach(function(i){
+      const d=new Date(i.date);
+      const key=d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0');
+      if(!monthly[key])monthly[key]={sales:0,profit:0};
+      monthly[key].sales+=+i.price||0;
+      monthly[key].profit+=+i.profit||0;
+    });
+    const labels=Object.keys(monthly).sort().slice(-12);
+    destroyChart('trend');
+    const ctx=document.getElementById('chart-trend-canvas').getContext('2d');
+    chartInsts['trend']=new Chart(ctx,{
+      type:'line',
+      data:{labels,datasets:[
+        {label:'売上',data:labels.map(function(k){return monthly[k].sales;}),borderColor:'rgba(255,107,53,1)',backgroundColor:'rgba(255,107,53,0.1)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'rgba(255,107,53,1)'},
+        {label:'利益',data:labels.map(function(k){return monthly[k].profit;}),borderColor:'rgba(6,214,160,1)',backgroundColor:'rgba(6,214,160,0.1)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'rgba(6,214,160,1)'}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{ticks:{callback:function(v){return '¥'+v.toLocaleString();}}}}}
+    });
   } catch(e){toast('グラフ取得失敗','error');}
 }
 
