@@ -157,7 +157,7 @@ body.modal-open { overflow: hidden; }
     <div class="stat-card mint"><div class="stat-label">純利益</div><div class="stat-value" id="total-profit">¥0</div></div>
   </div>
   <div class="stats-grid">
-    <div class="stat-card"><div class="stat-label">手数料合計</div><div class="stat-value" id="total-fee">¥0</div></div>
+    <div class="stat-card"><div class="stat-label">コスト合計</div><div class="stat-value" id="total-fee">¥0</div></div>
     <div class="stat-card"><div class="stat-label">販売件数</div><div class="stat-value" id="month-count">0件</div></div>
   </div>
   <div class="card">
@@ -216,26 +216,28 @@ body.modal-open { overflow: hidden; }
 </div>
 
 <div class="page" id="page-chart">
-  <!-- タブ -->
-  <div class="chart-tabs">
-    <button class="chart-tab active" onclick="switchChart('monthly',this)">月別</button>
-    <button class="chart-tab" onclick="switchChart('yearly',this)">年別</button>
-    <button class="chart-tab" onclick="switchChart('trend',this)">推移</button>
+  <!-- 年選択 -->
+  <div class="year-select-wrap" style="margin-bottom:20px">
+    <select class="year-select" id="chart-year" onchange="renderChart()"></select>
   </div>
-  <!-- 月別 -->
-  <div class="card chart-panel active" id="chart-monthly">
+  <!-- 年間サマリー -->
+  <div class="stats-grid">
+    <div class="stat-card pink"><div class="stat-label">年間売上</div><div class="stat-value" id="y-sales">¥0</div></div>
+    <div class="stat-card mint"><div class="stat-label">年間利益</div><div class="stat-value" id="y-profit">¥0</div></div>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">コスト合計</div><div class="stat-value" id="y-fee">¥0</div></div>
+    <div class="stat-card"><div class="stat-label">販売件数</div><div class="stat-value" id="y-count">0件</div></div>
+  </div>
+  <!-- 月別棒グラフ -->
+  <div class="card">
     <div class="section-label">月別売上・利益</div>
-    <div class="chart-wrap"><canvas id="chart-monthly-canvas"></canvas></div>
+    <div class="chart-wrap"><canvas id="chart-bar-canvas"></canvas></div>
   </div>
-  <!-- 年別 -->
-  <div class="card chart-panel" id="chart-yearly">
-    <div class="section-label">年別売上・利益</div>
-    <div class="chart-wrap"><canvas id="chart-yearly-canvas"></canvas></div>
-  </div>
-  <!-- 推移 -->
-  <div class="card chart-panel" id="chart-trend">
-    <div class="section-label">利益推移（折れ線）</div>
-    <div class="chart-wrap"><canvas id="chart-trend-canvas"></canvas></div>
+  <!-- 月別折れ線グラフ -->
+  <div class="card">
+    <div class="section-label">月別利益推移</div>
+    <div class="chart-wrap"><canvas id="chart-line-canvas"></canvas></div>
   </div>
 </div>
 
@@ -361,7 +363,7 @@ async function renderHome() {
     const mi = all.filter(function(i){ const d=new Date(i.date); return d.getFullYear()===curYear&&d.getMonth()+1===curMonth; });
     document.getElementById('total-sales').textContent  = fmt(mi.reduce(function(s,i){return s+(+i.price||0);},0));
     document.getElementById('total-profit').textContent = fmt(mi.reduce(function(s,i){return s+(+i.profit||0);},0));
-    document.getElementById('total-fee').textContent    = fmt(mi.reduce(function(s,i){return s+(+i.fee_amount||0);},0));
+    document.getElementById('total-fee').textContent    = fmt(mi.reduce(function(s,i){return s+(+i.fee_amount||0)+(+i.shipping||0)+(+i.cost||0)+(+i.packing!=null?+i.packing:10);},0));
     document.getElementById('month-count').textContent  = mi.length+'件';
     const appMap={};
     mi.forEach(function(i){ if(!appMap[i.app])appMap[i.app]={sales:0,profit:0}; appMap[i.app].sales+=+i.price||0; appMap[i.app].profit+=+i.profit||0; });
@@ -531,92 +533,72 @@ async function saveItem() {
 let chartInsts = {};
 function destroyChart(key) { if(chartInsts[key]){chartInsts[key].destroy();delete chartInsts[key];} }
 
-function switchChart(type, btn) {
-  document.querySelectorAll('.chart-tab').forEach(function(b){b.classList.remove('active');});
-  document.querySelectorAll('.chart-panel').forEach(function(p){p.classList.remove('active');});
-  btn.classList.add('active');
-  document.getElementById('chart-'+type).classList.add('active');
-  if(type==='monthly') renderMonthly();
-  if(type==='yearly')  renderYearly();
-  if(type==='trend')   renderTrend();
-}
-
 async function renderChart() {
-  renderMonthly();
-}
-
-async function renderMonthly() {
   try {
-    const all=await dbGetAll();
-    const monthly={};
-    all.forEach(function(i){
-      const d=new Date(i.date);
-      const key=d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0');
-      if(!monthly[key])monthly[key]={sales:0,profit:0};
-      monthly[key].sales+=+i.price||0;
-      monthly[key].profit+=+i.profit||0;
-    });
-    const labels=Object.keys(monthly).sort().slice(-12);
-    destroyChart('monthly');
-    const ctx=document.getElementById('chart-monthly-canvas').getContext('2d');
-    chartInsts['monthly']=new Chart(ctx,{
+    const all = await dbGetAll();
+
+    // 年リストを作成してプルダウンを更新
+    const years = [...new Set(all.map(function(i){ return new Date(i.date).getFullYear(); }))].sort(function(a,b){return b-a;});
+    const sel = document.getElementById('chart-year');
+    const curVal = sel.value;
+    sel.innerHTML = years.map(function(y){ return '<option value="'+y+'">'+y+'年</option>'; }).join('');
+    if(curVal && years.includes(+curVal)) sel.value = curVal;
+
+    const year = +sel.value;
+    const months = ['1','2','3','4','5','6','7','8','9','10','11','12'];
+    const labels = months.map(function(m){ return m+'月'; });
+
+    // 選択年のデータを月別に集計
+    const monthly = {};
+    months.forEach(function(m){ monthly[m] = {sales:0, profit:0, fee:0, count:0}; });
+    all.filter(function(i){ return new Date(i.date).getFullYear()===year; })
+       .forEach(function(i){
+         const m = String(new Date(i.date).getMonth()+1);
+         monthly[m].sales  += +i.price||0;
+         monthly[m].profit += +i.profit||0;
+         monthly[m].fee    += (+i.fee_amount||0)+(+i.shipping||0)+(+i.cost||0)+(i.packing!=null?+i.packing:10);
+         monthly[m].count  += 1;
+       });
+
+    // 年間サマリー
+    const totSales  = months.reduce(function(s,m){return s+monthly[m].sales;},0);
+    const totProfit = months.reduce(function(s,m){return s+monthly[m].profit;},0);
+    const totFee    = months.reduce(function(s,m){return s+monthly[m].fee;},0);
+    const totCount  = months.reduce(function(s,m){return s+monthly[m].count;},0);
+    document.getElementById('y-sales').textContent  = fmt(totSales);
+    document.getElementById('y-profit').textContent = fmt(totProfit);
+    document.getElementById('y-fee').textContent    = fmt(totFee);
+    document.getElementById('y-count').textContent  = totCount+'件';
+
+    const chartOpts = {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'top'}},
+      scales:{y:{ticks:{callback:function(v){return '¥'+v.toLocaleString();}}}}
+    };
+
+    // 棒グラフ
+    destroyChart('bar');
+    chartInsts['bar'] = new Chart(document.getElementById('chart-bar-canvas').getContext('2d'),{
       type:'bar',
-      data:{labels,datasets:[
-        {label:'売上',data:labels.map(function(k){return monthly[k].sales;}),backgroundColor:'rgba(255,107,53,0.75)',borderRadius:4},
-        {label:'利益',data:labels.map(function(k){return monthly[k].profit;}),backgroundColor:'rgba(6,214,160,0.75)',borderRadius:4}
+      data:{labels, datasets:[
+        {label:'売上', data:months.map(function(m){return monthly[m].sales;}),  backgroundColor:'rgba(255,107,53,0.75)', borderRadius:4},
+        {label:'利益', data:months.map(function(m){return monthly[m].profit;}), backgroundColor:'rgba(6,214,160,0.75)',  borderRadius:4}
       ]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{ticks:{callback:function(v){return '¥'+v.toLocaleString();}}}}}
+      options: chartOpts
     });
-  } catch(e){toast('グラフ取得失敗','error');}
-}
 
-async function renderYearly() {
-  try {
-    const all=await dbGetAll();
-    const yearly={};
-    all.forEach(function(i){
-      const key=new Date(i.date).getFullYear()+'年';
-      if(!yearly[key])yearly[key]={sales:0,profit:0};
-      yearly[key].sales+=+i.price||0;
-      yearly[key].profit+=+i.profit||0;
-    });
-    const labels=Object.keys(yearly).sort();
-    destroyChart('yearly');
-    const ctx=document.getElementById('chart-yearly-canvas').getContext('2d');
-    chartInsts['yearly']=new Chart(ctx,{
-      type:'bar',
-      data:{labels,datasets:[
-        {label:'売上',data:labels.map(function(k){return yearly[k].sales;}),backgroundColor:'rgba(255,107,53,0.75)',borderRadius:6},
-        {label:'利益',data:labels.map(function(k){return yearly[k].profit;}),backgroundColor:'rgba(6,214,160,0.75)',borderRadius:6}
-      ]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{ticks:{callback:function(v){return '¥'+v.toLocaleString();}}}}}
-    });
-  } catch(e){toast('グラフ取得失敗','error');}
-}
-
-async function renderTrend() {
-  try {
-    const all=await dbGetAll();
-    const monthly={};
-    all.forEach(function(i){
-      const d=new Date(i.date);
-      const key=d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0');
-      if(!monthly[key])monthly[key]={sales:0,profit:0};
-      monthly[key].sales+=+i.price||0;
-      monthly[key].profit+=+i.profit||0;
-    });
-    const labels=Object.keys(monthly).sort().slice(-12);
-    destroyChart('trend');
-    const ctx=document.getElementById('chart-trend-canvas').getContext('2d');
-    chartInsts['trend']=new Chart(ctx,{
+    // 折れ線グラフ
+    destroyChart('line');
+    chartInsts['line'] = new Chart(document.getElementById('chart-line-canvas').getContext('2d'),{
       type:'line',
-      data:{labels,datasets:[
-        {label:'売上',data:labels.map(function(k){return monthly[k].sales;}),borderColor:'rgba(255,107,53,1)',backgroundColor:'rgba(255,107,53,0.1)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'rgba(255,107,53,1)'},
-        {label:'利益',data:labels.map(function(k){return monthly[k].profit;}),borderColor:'rgba(6,214,160,1)',backgroundColor:'rgba(6,214,160,0.1)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'rgba(6,214,160,1)'}
+      data:{labels, datasets:[
+        {label:'売上', data:months.map(function(m){return monthly[m].sales;}),  borderColor:'rgba(255,107,53,1)', backgroundColor:'rgba(255,107,53,0.08)', tension:0.4, fill:true, pointRadius:3, pointBackgroundColor:'rgba(255,107,53,1)'},
+        {label:'利益', data:months.map(function(m){return monthly[m].profit;}), borderColor:'rgba(6,214,160,1)',  backgroundColor:'rgba(6,214,160,0.08)',  tension:0.4, fill:true, pointRadius:3, pointBackgroundColor:'rgba(6,214,160,1)'}
       ]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{ticks:{callback:function(v){return '¥'+v.toLocaleString();}}}}}
+      options: chartOpts
     });
-  } catch(e){toast('グラフ取得失敗','error');}
+
+  } catch(e){ toast('グラフ取得失敗','error'); }
 }
 
 function saveSettings() {
