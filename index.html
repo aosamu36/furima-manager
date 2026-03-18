@@ -430,7 +430,7 @@ function calcProfit() {
   const price=+document.getElementById('f-price').value||0;
   const shipping=+document.getElementById('f-shipping').value||0;
   const cost=+document.getElementById('f-cost').value||0;
-  const packing=document.getElementById('f-packing').value===''?10:(+document.getElementById('f-packing').value||0);
+  const packingEl=document.getElementById('f-packing'); const packing=packingEl.value===''?0:+packingEl.value;
   const fee=Math.floor(price*(FEE_RATES[document.getElementById('f-app').value]||0.10));
   const profit=price-fee-shipping-cost-packing;
   document.getElementById('f-fee').value=fee;
@@ -479,7 +479,9 @@ async function handleImage(e) {
     if(p.date) document.getElementById('f-date').value=p.date.replace(/-/g,'/');
     if(p.app){const keys=['メルカリ','ラクマ','ヤフオク','PayPayフリマ']; document.getElementById('f-app').value=keys.find(function(k){return p.app.includes(k);})||'メルカリ';}
     if(p.price!=null) document.getElementById('f-price').value=p.price;
-    document.getElementById('f-shipping').value=(p.shipping!=null&&p.shipping>0)?p.shipping:85;
+    var shippingVal = (p.shipping!=null&&p.shipping>0)?p.shipping:85;
+    if(shippingVal===160) shippingVal=180;
+    document.getElementById('f-shipping').value=shippingVal;
     // 【】内のテキストでカード種別を判別
     if(p.name){
       const bracket=p.name.match(/【([^】]+)】/);
@@ -492,6 +494,7 @@ async function handleImage(e) {
         document.getElementById('f-category').value='その他';
       }
     }
+    document.getElementById('f-packing').value=10;
     calcProfit();
     const modal=document.getElementById('done-modal');
     modal.classList.add('show');
@@ -623,12 +626,14 @@ const _now=new Date();
 document.getElementById('f-date').value=_now.getFullYear()+'/'+String(_now.getMonth()+1).padStart(2,'0')+'/'+String(_now.getDate()).padStart(2,'0');
 renderHome();
 
+// 起動直後にviewportを再計算
+window.scrollTo(0,1);
+setTimeout(function(){ window.scrollTo(0,0); }, 50);
+setTimeout(function(){ window.scrollTo(0,1); setTimeout(function(){ window.scrollTo(0,0); }, 50); }, 300);
+
 setTimeout(function(){
   var s=document.getElementById('splash');
   s.classList.add('hide');
-  // スプラッシュが消えるタイミングでviewportを再計算させる
-  window.scrollTo(0,1);
-  setTimeout(function(){ window.scrollTo(0,0); },50);
   setTimeout(function(){s.remove();},800);
 },2200);
 </script>
