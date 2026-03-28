@@ -27,7 +27,11 @@ body {
   padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);
   -webkit-font-smoothing: antialiased;
 }
-body.modal-open { overflow: hidden; }
+body.modal-open { 
+  overflow: hidden !important;
+  position: fixed;
+  width: 100%;
+}
 /* SPLASH */
 .splash { position: fixed; inset: 0; z-index: 999; background: #000; opacity: 1; transition: opacity 0.7s ease; }
 .splash.hide { opacity: 0; pointer-events: none; }
@@ -246,11 +250,11 @@ body.modal-open { overflow: hidden; }
   <div class="card">
     <div class="section-label" style="margin-bottom:12px">Supabase 接続設定</div>
     <p style="font-size:13px;color:var(--muted);margin-bottom:14px">URLとAPIキーを入力してください。</p>
-    <div class="form-group"><label class="form-label">Project URL</label><input class="form-input" id="s-url" type="text" placeholder="https://xxxx.supabase.co" autocomplete="off"></div>
-    <div class="form-group"><label class="form-label">Publishable (anon) Key</label><input class="form-input" id="s-key" type="text" placeholder="sb_publishable_..." autocomplete="off"></div>
+    <div class="form-group"><label class="form-label">Project URL</label><input class="form-input" id="s-url" autocorrect="off" autocapitalize="off" spellcheck="false" type="text" placeholder="https://xxxx.supabase.co" autocomplete="off"></div>
+    <div class="form-group"><label class="form-label">Publishable (anon) Key</label><input class="form-input" id="s-key" autocorrect="off" autocapitalize="off" spellcheck="false" type="text" placeholder="sb_publishable_..." autocomplete="off"></div>
     <div class="form-group">
       <label class="form-label">Gemini API Key</label>
-      <input class="form-input" id="s-gemini" type="password" placeholder="AIza..." autocomplete="off">
+      <input class="form-input" id="s-gemini" autocorrect="off" autocapitalize="off" spellcheck="false" type="password" placeholder="AIza..." autocomplete="off">
       <div style="margin-top:6px"><a style="color:var(--accent);font-size:12px;text-decoration:none" href="https://aistudio.google.com/apikey" target="_blank">→ Google AI Studioで無料取得</a></div>
     </div>
     <button class="btn-primary" onclick="saveSettings()">設定を保存する</button>
@@ -472,8 +476,10 @@ function showDetail(el) {
   document.getElementById('d-edit-btn').onclick = function() {
     closeDetail(); editItem(item);
   };
+  _scrollY = window.scrollY;
   document.getElementById('detail-modal').classList.add('show');
   document.body.classList.add('modal-open');
+  document.body.style.top = '-' + _scrollY + 'px';
   // スワイプで閉じる
   const sheet = document.querySelector('.detail-sheet');
   let startY = 0;
@@ -492,6 +498,8 @@ function closeDetail(e) {
   if (!e || e.target === document.getElementById('detail-modal')) {
     document.getElementById('detail-modal').classList.remove('show');
     document.body.classList.remove('modal-open');
+    document.body.style.top = '';
+    window.scrollTo(0, _scrollY);
   }
 }
 
