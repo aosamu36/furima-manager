@@ -135,6 +135,7 @@ body.modal-open { overflow: hidden; }
 .detail-footer { padding: 16px 20px 0; display: flex; gap: 10px; }
 .btn-delete { flex: 1; padding: 13px; background: #fff0f0; color: #e63262; border: 1px solid #ffd6d6; border-radius: 12px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 .btn-close { flex: 1; padding: 13px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.btn-edit { flex: 1; padding: 13px; background: #f0f5ff; color: #3b82f6; border: 1px solid #bfdbfe; border-radius: 12px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -291,6 +292,7 @@ body.modal-open { overflow: hidden; }
     <div class="detail-row" style="background:#f8fffe"><span class="detail-label" style="font-weight:700">販売利益</span><span class="detail-value green" id="d-profit" style="font-size:18px"></span></div>
     <div class="detail-footer">
       <button class="btn-delete" id="d-delete-btn"><span class="material-icons-round" style="font-size:16px;vertical-align:-3px">delete</span> 削除</button>
+      <button class="btn-edit" id="d-edit-btn"><span class="material-icons-round" style="font-size:16px;vertical-align:-3px">edit</span> 編集</button>
       <button class="btn-close" onclick="closeDetail()">閉じる</button>
     </div>
   </div>
@@ -380,6 +382,67 @@ async function renderHome() {
   }
 }
 
+function editItem(item) {
+  // 追加ページに移動してフォームに値をセット
+  const addBtn = document.querySelector('.nav-btn:nth-child(2)');
+  showPage('add', addBtn);
+  // 編集モードフラグ
+  document.getElementById('f-name').value     = item.name || '';
+  document.getElementById('f-date').value     = (item.date||'').replace(/-/g,'/');
+  document.getElementById('f-app').value      = item.app || 'メルカリ';
+  document.getElementById('f-category').value = item.category || '遊戯王';
+  document.getElementById('f-price').value    = item.price || 0;
+  document.getElementById('f-shipping').value = item.shipping || 0;
+  document.getElementById('f-cost').value     = item.cost || 0;
+  document.getElementById('f-packing').value  = item.packing!=null ? item.packing : 10;
+  calcProfit();
+  // 保存時に古いデータを削除して新しいデータを保存
+  const saveBtn = document.querySelector('.btn-save');
+  saveBtn.textContent = '更新する';
+  saveBtn._editId = item.id;
+  saveBtn.onclick = function() { updateItem(this._editId); };
+}
+
+async function updateItem(oldId) {
+  const name  = document.getElementById('f-name').value.trim();
+  const date  = document.getElementById('f-date').value.trim();
+  const price = +document.getElementById('f-price').value || 0;
+  if (!name)  { toast('商品名を入力してください', 'error'); return; }
+  if (!date)  { toast('購入日時を入力してください', 'error'); return; }
+  if (!price) { toast('商品代金を入力してください', 'error'); return; }
+  const item = {
+    id: oldId, name, date: date.replace(/\//g,'-'),
+    app: document.getElementById('f-app').value,
+    category: document.getElementById('f-category').value,
+    price, fee_amount: +document.getElementById('f-fee').value||0,
+    shipping: +document.getElementById('f-shipping').value||0,
+    profit: +document.getElementById('f-profit').value||0,
+    cost: +document.getElementById('f-cost').value||0,
+    packing: +document.getElementById('f-packing').value||0,
+    delivery_method: '', item_id: ''
+  };
+  try {
+    const c = getClient();
+    const { error } = await c.from('items').update(item).eq('id', oldId);
+    if (error) throw error;
+    toast('✅ 更新しました！');
+    // フォームリセット
+    const saveBtn = document.querySelector('.btn-save');
+    saveBtn.textContent = '保存';
+    saveBtn.onclick = saveItem;
+    saveBtn._editId = null;
+    ['f-name','f-price','f-shipping','f-cost','f-packing'].forEach(function(id){document.getElementById(id).value='';});
+    document.getElementById('f-fee').value=0;
+    document.getElementById('f-profit').value=0;
+    document.getElementById('f-profit-display').textContent='¥0';
+    document.getElementById('f-profit-display').style.color='#06a070';
+    document.getElementById('f-category').value='遊戯王';
+    const t=new Date();
+    document.getElementById('f-date').value=t.getFullYear()+'/'+String(t.getMonth()+1).padStart(2,'0')+'/'+String(t.getDate()).padStart(2,'0');
+    renderHome();
+  } catch(e) { toast('更新失敗: '+e.message,'error'); }
+}
+
 async function deleteItem(id) {
   if(!confirm('この記録を削除しますか？')) return;
   try { await dbDelete(id); renderHome(); toast('削除しました'); }
@@ -405,6 +468,9 @@ function showDetail(el) {
   document.getElementById('d-profit').className = 'detail-value ' + (profit >= 0 ? 'green' : 'red');
   document.getElementById('d-delete-btn').onclick = function() {
     closeDetail(); deleteItem(item.id);
+  };
+  document.getElementById('d-edit-btn').onclick = function() {
+    closeDetail(); editItem(item);
   };
   document.getElementById('detail-modal').classList.add('show');
   document.body.classList.add('modal-open');
