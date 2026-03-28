@@ -27,11 +27,7 @@ body {
   padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);
   -webkit-font-smoothing: antialiased;
 }
-body.modal-open { 
-  overflow: hidden !important;
-  position: fixed;
-  width: 100%;
-}
+body.modal-open { overflow: hidden; touch-action: none; }
 /* SPLASH */
 .splash { position: fixed; inset: 0; z-index: 999; background: #000; opacity: 1; transition: opacity 0.7s ease; }
 .splash.hide { opacity: 0; pointer-events: none; }
@@ -476,10 +472,8 @@ function showDetail(el) {
   document.getElementById('d-edit-btn').onclick = function() {
     closeDetail(); editItem(item);
   };
-  _scrollY = window.scrollY;
   document.getElementById('detail-modal').classList.add('show');
   document.body.classList.add('modal-open');
-  document.body.style.top = '-' + _scrollY + 'px';
   // スワイプで閉じる
   const sheet = document.querySelector('.detail-sheet');
   let startY = 0;
@@ -498,8 +492,6 @@ function closeDetail(e) {
   if (!e || e.target === document.getElementById('detail-modal')) {
     document.getElementById('detail-modal').classList.remove('show');
     document.body.classList.remove('modal-open');
-    document.body.style.top = '';
-    window.scrollTo(0, _scrollY);
   }
 }
 
@@ -703,6 +695,13 @@ async function renderSettings() {
 const _now=new Date();
 document.getElementById('f-date').value=_now.getFullYear()+'/'+String(_now.getMonth()+1).padStart(2,'0')+'/'+String(_now.getDate()).padStart(2,'0');
 renderHome();
+
+// フォーカスアウト時にスクロール位置リセット（iOSフッターズレ対策）
+window.addEventListener('focusout', function() {
+  setTimeout(function() {
+    window.scrollTo(0, window.scrollY);
+  }, 100);
+});
 
 // 起動直後にviewportを再計算
 window.scrollTo(0,1);
