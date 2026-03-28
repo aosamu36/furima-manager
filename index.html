@@ -27,7 +27,7 @@ body {
   padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);
   -webkit-font-smoothing: antialiased;
 }
-body.modal-open { overflow: hidden; touch-action: none; }
+body.modal-open { overflow: hidden; }
 /* SPLASH */
 .splash { position: fixed; inset: 0; z-index: 999; background: #000; opacity: 1; transition: opacity 0.7s ease; }
 .splash.hide { opacity: 0; pointer-events: none; }
@@ -250,7 +250,7 @@ body.modal-open { overflow: hidden; touch-action: none; }
     <div class="form-group"><label class="form-label">Publishable (anon) Key</label><input class="form-input" id="s-key" autocorrect="off" autocapitalize="off" spellcheck="false" type="text" placeholder="sb_publishable_..." autocomplete="off"></div>
     <div class="form-group">
       <label class="form-label">Gemini API Key</label>
-      <input class="form-input" id="s-gemini" autocorrect="off" autocapitalize="off" spellcheck="false" type="password" placeholder="AIza..." autocomplete="off">
+      <input class="form-input" id="s-gemini" autocorrect="off" autocapitalize="off" spellcheck="false" type="text" placeholder="AIza..." autocomplete="off" autocomplete="new-password">
       <div style="margin-top:6px"><a style="color:var(--accent);font-size:12px;text-decoration:none" href="https://aistudio.google.com/apikey" target="_blank">→ Google AI Studioで無料取得</a></div>
     </div>
     <button class="btn-primary" onclick="saveSettings()">設定を保存する</button>
@@ -482,10 +482,9 @@ function showDetail(el) {
     const dy = e.changedTouches[0].clientY - startY;
     if (dy > 60) closeDetail();
   }, {passive:true});
-  // モーダル背景のタッチスクロールを禁止
-  document.getElementById('detail-modal').addEventListener('touchmove', function(e) {
-    if (e.target === document.getElementById('detail-modal')) e.preventDefault();
-  }, {passive:false});
+  // モーダル表示中は背景スクロール完全禁止
+  document.getElementById('detail-modal')._blockScroll = function(e) { e.preventDefault(); };
+  document.getElementById('detail-modal').addEventListener('touchmove', document.getElementById('detail-modal')._blockScroll, {passive:false});
 }
 
 function closeDetail(e) {
