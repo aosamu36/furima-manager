@@ -101,7 +101,7 @@ body.modal-open { overflow: hidden; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
 .form-group { margin-bottom: 10px; }
 .form-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
-.form-input { width: 100%; padding: 11px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 15px; color: var(--text); outline: none; -webkit-appearance: none; appearance: none; }
+.form-input { width: 100%; padding: 11px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 16px; color: var(--text); outline: none; -webkit-appearance: none; appearance: none; }
 .form-input:focus { border-color: var(--accent); background: #fff; }
 .btn-save { display: block; width: 100%; padding: 15px; background: #ff6b35; color: #fff; border: none; border-radius: 12px; font-family: inherit; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 8px; -webkit-appearance: none; }
 .btn-save:active { opacity: 0.75; }
@@ -299,7 +299,7 @@ body.modal-open { overflow: hidden; }
 </div>
 <div id="done-modal" class="modal" onclick="const m=this;clearTimeout(m._t);m.classList.remove('show')">
   <div class="modal-inner">
-    <div style="font-size:36px;margin-bottom:8px">✅</div>
+    <div style="margin-bottom:8px"><span class="material-icons-round" style="font-size:48px;color:#06d6a0">check_circle</span></div>
     <div style="font-size:16px;font-weight:700">解析完了！</div>
     <div style="font-size:13px;color:#8e8e93;margin-top:4px">内容を確認してください</div>
   </div>
@@ -425,7 +425,7 @@ async function updateItem(oldId) {
     const c = getClient();
     const { error } = await c.from('items').update(item).eq('id', oldId);
     if (error) throw error;
-    toast('✅ 更新しました！');
+    toast('更新しました！');
     // フォームリセット
     const saveBtn = document.querySelector('.btn-save');
     saveBtn.textContent = '保存';
@@ -482,6 +482,10 @@ function showDetail(el) {
     const dy = e.changedTouches[0].clientY - startY;
     if (dy > 60) closeDetail();
   }, {passive:true});
+  // モーダル背景のタッチスクロールを禁止
+  document.getElementById('detail-modal').addEventListener('touchmove', function(e) {
+    if (e.target === document.getElementById('detail-modal')) e.preventDefault();
+  }, {passive:false});
 }
 
 function closeDetail(e) {
@@ -587,7 +591,7 @@ async function saveItem() {
   const packingVal = document.getElementById('f-packing').value===''?10:(+document.getElementById('f-packing').value||0);
   const item={id:Date.now().toString(),name,date:date.replace(/\//g,'-'),app:document.getElementById('f-app').value,category:document.getElementById('f-category').value,price,fee_amount:+document.getElementById('f-fee').value||0,shipping:+document.getElementById('f-shipping').value||0,profit:+document.getElementById('f-profit').value||0,cost:+document.getElementById('f-cost').value||0,packing:packingVal,delivery_method:'',item_id:''};
   try {
-    await dbInsert(item); toast('✅ 保存しました！');
+    await dbInsert(item); toast('保存しました！');
     ['f-name','f-price','f-shipping','f-cost','f-packing'].forEach(function(id){document.getElementById(id).value='';});
     document.getElementById('f-fee').value=0;
     document.getElementById('f-profit').value=0;
@@ -677,7 +681,7 @@ function saveSettings() {
   if(!url||!key){toast('URLとキーを入力してください','error');return;}
   localStorage.setItem('sb_url',url);localStorage.setItem('sb_key',key);
   if(gemini)localStorage.setItem('gemini_key',gemini);
-  _sb=null;toast('✅ 設定を保存しました');renderSettings();renderHome();
+  _sb=null;toast('設定を保存しました');renderSettings();renderHome();
 }
 async function renderSettings() {
   document.getElementById('s-url').value=localStorage.getItem('sb_url')||'';
