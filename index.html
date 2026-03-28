@@ -217,11 +217,9 @@ body.modal-open { overflow: hidden; }
 </div>
 
 <div class="page" id="page-chart">
-  <!-- 年選択 -->
   <div class="year-select-wrap" style="margin-bottom:20px">
     <select class="year-select" id="chart-year" onchange="renderChart()"></select>
   </div>
-  <!-- 年間サマリー -->
   <div class="stats-grid">
     <div class="stat-card pink"><div class="stat-label">年間売上</div><div class="stat-value" id="y-sales">¥0</div></div>
     <div class="stat-card mint"><div class="stat-label">年間利益</div><div class="stat-value" id="y-profit">¥0</div></div>
@@ -230,12 +228,10 @@ body.modal-open { overflow: hidden; }
     <div class="stat-card"><div class="stat-label">コスト合計</div><div class="stat-value" id="y-fee">¥0</div></div>
     <div class="stat-card"><div class="stat-label">販売件数</div><div class="stat-value" id="y-count">0件</div></div>
   </div>
-  <!-- 月別棒グラフ -->
   <div class="card">
     <div class="section-label">月別売上・利益</div>
     <div class="chart-wrap"><canvas id="chart-bar-canvas"></canvas></div>
   </div>
-  <!-- 月別折れ線グラフ -->
   <div class="card">
     <div class="section-label">月別利益推移</div>
     <div class="chart-wrap"><canvas id="chart-line-canvas"></canvas></div>
@@ -383,10 +379,8 @@ async function renderHome() {
 }
 
 function editItem(item) {
-  // 追加ページに移動してフォームに値をセット
   const addBtn = document.querySelector('.nav-btn:nth-child(2)');
   showPage('add', addBtn);
-  // 編集モードフラグ
   document.getElementById('f-name').value     = item.name || '';
   document.getElementById('f-date').value     = (item.date||'').replace(/-/g,'/');
   document.getElementById('f-app').value      = item.app || 'メルカリ';
@@ -396,7 +390,6 @@ function editItem(item) {
   document.getElementById('f-cost').value     = item.cost || 0;
   document.getElementById('f-packing').value  = item.packing!=null ? item.packing : 10;
   calcProfit();
-  // 保存時に古いデータを削除して新しいデータを保存
   const saveBtn = document.querySelector('.btn-save');
   saveBtn.textContent = '更新する';
   saveBtn._editId = item.id;
@@ -426,7 +419,6 @@ async function updateItem(oldId) {
     const { error } = await c.from('items').update(item).eq('id', oldId);
     if (error) throw error;
     toast('更新しました！');
-    // フォームリセット
     const saveBtn = document.querySelector('.btn-save');
     saveBtn.textContent = '保存';
     saveBtn.onclick = saveItem;
@@ -474,7 +466,6 @@ function showDetail(el) {
   };
   document.getElementById('detail-modal').classList.add('show');
   document.body.classList.add('modal-open');
-  // スワイプで閉じる
   const sheet = document.querySelector('.detail-sheet');
   let startY = 0;
   sheet.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; }, {passive:true});
@@ -482,7 +473,6 @@ function showDetail(el) {
     const dy = e.changedTouches[0].clientY - startY;
     if (dy > 60) closeDetail();
   }, {passive:true});
-  // モーダル表示中は背景スクロール完全禁止
   document.getElementById('detail-modal')._blockScroll = function(e) { e.preventDefault(); };
   document.getElementById('detail-modal').addEventListener('touchmove', document.getElementById('detail-modal')._blockScroll, {passive:false});
 }
@@ -551,7 +541,6 @@ async function handleImage(e) {
     var shippingVal = (p.shipping!=null&&p.shipping>0)?p.shipping:85;
     if(shippingVal===160) shippingVal=180;
     document.getElementById('f-shipping').value=shippingVal;
-    // 【】内のテキストでカード種別を判別
     if(p.name){
       const bracket=p.name.match(/【([^】]+)】/);
       const kw=bracket?bracket[1]:'';
@@ -608,19 +597,14 @@ function destroyChart(key) { if(chartInsts[key]){chartInsts[key].destroy();delet
 async function renderChart() {
   try {
     const all = await dbGetAll();
-
-    // 年リストを作成してプルダウンを更新
     const years = [...new Set(all.map(function(i){ return new Date(i.date).getFullYear(); }))].sort(function(a,b){return b-a;});
     const sel = document.getElementById('chart-year');
     const curVal = sel.value;
     sel.innerHTML = years.map(function(y){ return '<option value="'+y+'">'+y+'年</option>'; }).join('');
     if(curVal && years.includes(+curVal)) sel.value = curVal;
-
     const year = +sel.value;
     const months = ['1','2','3','4','5','6','7','8','9','10','11','12'];
     const labels = months.map(function(m){ return m+'月'; });
-
-    // 選択年のデータを月別に集計
     const monthly = {};
     months.forEach(function(m){ monthly[m] = {sales:0, profit:0, fee:0, count:0}; });
     all.filter(function(i){ return new Date(i.date).getFullYear()===year; })
@@ -631,8 +615,6 @@ async function renderChart() {
          monthly[m].fee    += (+i.fee_amount||0)+(+i.shipping||0)+(+i.cost||0)+(i.packing!=null?+i.packing:10);
          monthly[m].count  += 1;
        });
-
-    // 年間サマリー
     const totSales  = months.reduce(function(s,m){return s+monthly[m].sales;},0);
     const totProfit = months.reduce(function(s,m){return s+monthly[m].profit;},0);
     const totFee    = months.reduce(function(s,m){return s+monthly[m].fee;},0);
@@ -641,14 +623,11 @@ async function renderChart() {
     document.getElementById('y-profit').textContent = fmt(totProfit);
     document.getElementById('y-fee').textContent    = fmt(totFee);
     document.getElementById('y-count').textContent  = totCount+'件';
-
     const chartOpts = {
       responsive:true, maintainAspectRatio:false,
       plugins:{legend:{position:'top'}},
       scales:{y:{ticks:{callback:function(v){return '¥'+v.toLocaleString();}}}}
     };
-
-    // 棒グラフ
     destroyChart('bar');
     chartInsts['bar'] = new Chart(document.getElementById('chart-bar-canvas').getContext('2d'),{
       type:'bar',
@@ -658,8 +637,6 @@ async function renderChart() {
       ]},
       options: chartOpts
     });
-
-    // 折れ線グラフ
     destroyChart('line');
     chartInsts['line'] = new Chart(document.getElementById('chart-line-canvas').getContext('2d'),{
       type:'line',
@@ -669,7 +646,6 @@ async function renderChart() {
       ]},
       options: chartOpts
     });
-
   } catch(e){ toast('グラフ取得失敗','error'); }
 }
 
@@ -695,12 +671,21 @@ const _now=new Date();
 document.getElementById('f-date').value=_now.getFullYear()+'/'+String(_now.getMonth()+1).padStart(2,'0')+'/'+String(_now.getDate()).padStart(2,'0');
 renderHome();
 
-// フォーカスアウト時にスクロール位置リセット（iOSフッターズレ対策）
-window.addEventListener('focusout', function() {
-  setTimeout(function() {
-    window.scrollTo(0, window.scrollY);
-  }, 100);
-});
+// ===== iOSキーボード後のフッターズレ修正 =====
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', function() {
+    var isKeyboardOpen = window.visualViewport.height < window.innerHeight * 0.75;
+    if (!isKeyboardOpen) {
+      setTimeout(function() {
+        window.scrollTo(0, 0);
+      }, 50);
+    }
+  });
+} else {
+  window.addEventListener('focusout', function() {
+    setTimeout(function() { window.scrollTo(0, 0); }, 150);
+  });
+}
 
 // 起動直後にviewportを再計算
 window.scrollTo(0,1);
