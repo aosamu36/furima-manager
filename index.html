@@ -43,10 +43,13 @@ body.modal-open { overflow: hidden; }
   height: calc(52px + env(safe-area-inset-top));
 }
 .header-logo { height: 38px; width: auto; object-fit: contain; filter: drop-shadow(0 1px 4px rgba(255,180,0,0.4)); }
+.header-right { display: flex; align-items: center; gap: 10px; }
 .db-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; border: 1px solid; }
 .db-ok   { color: var(--green);  border-color: rgba(6,214,160,0.4);  background: rgba(6,214,160,0.08); }
 .db-err  { color: var(--accent); border-color: rgba(255,107,53,0.4); background: rgba(255,107,53,0.08); }
 .db-wait { color: var(--muted);  border-color: var(--border); background: transparent; }
+.settings-btn { background: none; border: none; cursor: pointer; color: var(--muted); display: flex; align-items: center; justify-content: center; padding: 4px; }
+.settings-btn .material-icons-round { font-size: 24px; }
 /* NAV */
 .nav {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
@@ -83,7 +86,6 @@ body.modal-open { overflow: hidden; }
 .item-price { text-align: right; flex-shrink: 0; }
 .item-sale-val   { font-size: 15px; font-weight: 700; }
 .item-profit-val { font-size: 11px; color: var(--green); margin-top: 2px; }
-.item-del { background: none; border: none; font-size: 18px; color: #ccc; cursor: pointer; padding: 4px; flex-shrink: 0; }
 .tag { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 20px; margin-right: 4px; }
 .tag-mercari { background: #ffe8ec; color: #e63262; }
 .tag-rakuma  { background: #eeeaff; color: #6c5ce7; }
@@ -91,11 +93,11 @@ body.modal-open { overflow: hidden; }
 .tag-paypay  { background: #e0f0ff; color: #0070cc; }
 .tag-other   { background: #f0f0f0; color: #666; }
 .empty { text-align: center; padding: 48px 20px; }
-.empty-icon { font-size: 48px; margin-bottom: 12px; }
 .empty-text { font-size: 14px; color: var(--muted); line-height: 1.6; }
 /* FORM */
 .upload-area { width: 100%; padding: 20px; background: #f9f9fb; border: 2px dashed var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; margin-bottom: 16px; transition: all 0.2s; }
 .upload-area.analyzing { border-color: var(--accent); color: var(--accent); background: #fff8f5; }
+.upload-area.has-image { border-color: var(--green); background: #f0fdf9; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid #ffcbb5; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
@@ -113,7 +115,7 @@ body.modal-open { overflow: hidden; }
 .toast { position: fixed; bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px); left: 50%; transform: translateX(-50%) translateY(8px); background: #333; color: #fff; border-radius: 10px; padding: 10px 18px; font-size: 13px; font-weight: 600; opacity: 0; transition: all 0.25s; pointer-events: none; white-space: nowrap; z-index: 300; max-width: calc(100vw - 40px); text-align: center; }
 .toast.error { background: #e63262; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-/* MODAL */
+/* MODAL共通 */
 .modal { position: fixed; inset: 0; z-index: 400; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.35); opacity: 0; pointer-events: none; transition: opacity 0.25s; }
 .modal.show { opacity: 1; pointer-events: auto; }
 .modal-inner { background: #fff; border-radius: 20px; padding: 36px 48px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.2); transform: scale(0.85); transition: transform 0.25s; }
@@ -136,15 +138,42 @@ body.modal-open { overflow: hidden; }
 .btn-delete { flex: 1; padding: 13px; background: #fff0f0; color: #e63262; border: 1px solid #ffd6d6; border-radius: 12px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 .btn-close { flex: 1; padding: 13px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 .btn-edit { flex: 1; padding: 13px; background: #f0f5ff; color: #3b82f6; border: 1px solid #bfdbfe; border-radius: 12px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+/* 設定モーダル */
+.settings-modal { position: fixed; inset: 0; z-index: 500; display: flex; align-items: flex-end; background: rgba(0,0,0,0.4); opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+.settings-modal.show { opacity: 1; pointer-events: auto; }
+.settings-sheet { background: #fff; border-radius: 20px 20px 0 0; width: 100%; max-height: 88vh; overflow-y: auto; padding-bottom: calc(env(safe-area-inset-bottom) + 16px); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32,0.72,0,1); }
+.settings-modal.show .settings-sheet { transform: translateY(0); }
+.settings-header { padding: 20px 20px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.settings-title { font-size: 17px; font-weight: 700; }
+.settings-close { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 24px; display: flex; }
+.settings-body { padding: 16px; }
+/* レアリティ選択グリッド */
+.rarity-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.rarity-btn { padding: 10px 4px; background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; text-align: center; transition: all 0.15s; }
+.rarity-btn.selected { background: #fff5f0; border-color: var(--accent); color: var(--accent); }
+/* 結果表示エリア */
+.result-box { background: var(--bg); border-radius: 12px; padding: 14px; margin-bottom: 10px; border: 1px solid var(--border); position: relative; }
+.result-box-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.result-text { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.7; white-space: pre-wrap; word-break: break-all; }
+.copy-btn { position: absolute; top: 10px; right: 10px; background: none; border: none; cursor: pointer; color: var(--muted); display: flex; align-items: center; padding: 4px; }
+.copy-btn .material-icons-round { font-size: 18px; }
+/* カード画像プレビュー */
+.card-preview { width: 100%; max-height: 200px; object-fit: contain; border-radius: 10px; margin-bottom: 12px; display: none; }
+.card-preview.show { display: block; }
 </style>
 </head>
 <body>
 
 <div class="splash" id="splash"><img src="splash.PNG" alt=""></div>
 
-<header class="header">
+<header class="header" id="main-header">
   <img class="header-logo" src="logo.PNG" alt="決闘売上録">
-  <span class="db-badge db-wait" id="db-status">接続中</span>
+  <div class="header-right">
+    <span class="db-badge db-wait" id="db-status">接続中</span>
+    <button class="settings-btn" onclick="openSettings()">
+      <span class="material-icons-round">settings</span>
+    </button>
+  </div>
 </header>
 
 <div class="page active" id="page-home">
@@ -166,7 +195,7 @@ body.modal-open { overflow: hidden; }
     <div id="app-breakdown"><div style="color:var(--muted);font-size:13px">データなし</div></div>
   </div>
   <div class="section-label" style="padding:0 4px">今月の販売記録</div>
-  <div id="item-list"><div class="empty"><div class="empty-icon"><span class="material-icons-round" style="font-size:52px;color:var(--muted)">inventory_2</span></div><div class="empty-text">まだ記録がありません<br>追加から登録してね</div></div></div>
+  <div id="item-list"><div class="empty"><span class="material-icons-round" style="font-size:52px;color:var(--muted);display:block;text-align:center;margin-bottom:12px">inventory_2</span><div class="empty-text" style="text-align:center">まだ記録がありません<br>追加から登録してね</div></div></div>
 </div>
 
 <div class="page" id="page-add">
@@ -238,33 +267,57 @@ body.modal-open { overflow: hidden; }
   </div>
 </div>
 
-<div class="page" id="page-settings">
+<!-- 商品名・説明生成ページ -->
+
+<div class="page" id="page-generate">
   <div class="card">
-    <div class="section-label" style="margin-bottom:12px">Supabase 接続設定</div>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">URLとAPIキーを入力してください。</p>
-    <div class="form-group"><label class="form-label">Project URL</label><input class="form-input" id="s-url" autocorrect="off" autocapitalize="off" spellcheck="false" type="text" placeholder="https://xxxx.supabase.co" autocomplete="off"></div>
-    <div class="form-group"><label class="form-label">Publishable (anon) Key</label><input class="form-input" id="s-key" autocorrect="off" autocapitalize="off" spellcheck="false" type="text" placeholder="sb_publishable_..." autocomplete="off"></div>
-    <div class="form-group">
-      <label class="form-label">Gemini API Key</label>
-      <input class="form-input" id="s-gemini" autocorrect="off" autocapitalize="off" spellcheck="false" type="text" placeholder="AIza..." autocomplete="off" autocomplete="new-password">
-      <div style="margin-top:6px"><a style="color:var(--accent);font-size:12px;text-decoration:none" href="https://aistudio.google.com/apikey" target="_blank">→ Google AI Studioで無料取得</a></div>
+    <div class="section-label" style="margin-bottom:12px;display:flex;align-items:center;gap:6px">
+      <span class="material-icons-round" style="font-size:16px">auto_awesome</span>カード画像を選択
     </div>
-    <button class="btn-primary" onclick="saveSettings()">設定を保存する</button>
+    <div class="upload-area" id="card-upload-area" onclick="document.getElementById('card-img-input').click()">
+      <span id="card-upload-icon" class="material-icons-round" style="font-size:28px">add_photo_alternate</span>
+      <span id="card-upload-text">カード画像をタップして選択</span>
+    </div>
+    <input type="file" accept="image/*" id="card-img-input" style="display:none" onchange="handleCardImage(event)">
+    <img id="card-preview" class="card-preview" alt="カードプレビュー">
   </div>
+
   <div class="card">
-    <div class="section-label" style="margin-bottom:8px">DB情報</div>
-    <div style="font-size:13px;color:var(--muted)">
-      <div id="settings-url" style="word-break:break-all;margin-bottom:4px"></div>
-      <div id="settings-count">件数：-</div>
+    <div class="section-label" style="margin-bottom:12px">レアリティを選択</div>
+    <div class="rarity-grid" id="rarity-grid">
+      <!-- JSで生成 -->
+    </div>
+  </div>
+
+  <button class="btn-primary" id="generate-btn" onclick="generateDescription()" style="margin-bottom:12px">
+    <span class="material-icons-round" style="font-size:18px;vertical-align:-4px;margin-right:4px">auto_awesome</span>商品名・説明を生成
+  </button>
+
+  <!-- 結果 -->
+
+  <div id="generate-result" style="display:none">
+    <div class="card" style="position:relative">
+      <div class="result-box-label">タイトル</div>
+      <div class="result-text" id="result-title"></div>
+      <button class="copy-btn" onclick="copyText('result-title')">
+        <span class="material-icons-round">content_copy</span>
+      </button>
+    </div>
+    <div class="card" style="position:relative">
+      <div class="result-box-label">商品説明</div>
+      <div class="result-text" id="result-desc"></div>
+      <button class="copy-btn" onclick="copyText('result-desc')">
+        <span class="material-icons-round">content_copy</span>
+      </button>
     </div>
   </div>
 </div>
 
-<nav class="nav">
+<nav class="nav" id="main-nav">
   <button class="nav-btn active" onclick="showPage('home',this)"><span class="material-icons-round nav-icon">home</span>ホーム</button>
   <button class="nav-btn" onclick="showPage('add',this)"><span class="material-icons-round nav-icon">add_circle</span>追加</button>
   <button class="nav-btn" onclick="showPage('chart',this)"><span class="material-icons-round nav-icon">bar_chart</span>グラフ</button>
-  <button class="nav-btn" onclick="showPage('settings',this)"><span class="material-icons-round nav-icon">settings</span>設定</button>
+  <button class="nav-btn" onclick="showPage('generate',this)"><span class="material-icons-round nav-icon">auto_awesome</span>生成</button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -285,7 +338,7 @@ body.modal-open { overflow: hidden; }
     <div class="detail-row"><span class="detail-label">配送料</span><span class="detail-value" id="d-shipping"></span></div>
     <div class="detail-row"><span class="detail-label">梱包資材費</span><span class="detail-value" id="d-packing"></span></div>
     <div class="detail-row"><span class="detail-label">仕入れ値</span><span class="detail-value" id="d-cost"></span></div>
-    <div class="detail-row" style="background:#f8fffe"><span class="detail-label" style="font-weight:700">販売利益</span><span class="detail-value green" id="d-profit" style="font-size:18px"></span></div>
+    <div class="detail-row" style="background:#f8fffe"><span class="detail-label" style="font-weight:700">販売利益</span><span class="detail-value green" id="d-profit"></span></div>
     <div class="detail-footer">
       <button class="btn-delete" id="d-delete-btn"><span class="material-icons-round" style="font-size:16px;vertical-align:-3px">delete</span> 削除</button>
       <button class="btn-edit" id="d-edit-btn"><span class="material-icons-round" style="font-size:16px;vertical-align:-3px">edit</span> 編集</button>
@@ -293,6 +346,9 @@ body.modal-open { overflow: hidden; }
     </div>
   </div>
 </div>
+
+<!-- 解析完了モーダル -->
+
 <div id="done-modal" class="modal" onclick="const m=this;clearTimeout(m._t);m.classList.remove('show')">
   <div class="modal-inner">
     <div style="margin-bottom:8px"><span class="material-icons-round" style="font-size:48px;color:#06d6a0">check_circle</span></div>
@@ -301,7 +357,73 @@ body.modal-open { overflow: hidden; }
   </div>
 </div>
 
+<!-- 設定モーダル -->
+
+<div class="settings-modal" id="settings-modal" onclick="closeSettingsOutside(event)">
+  <div class="settings-sheet">
+    <div class="detail-handle"></div>
+    <div class="settings-header">
+      <div class="settings-title">設定</div>
+      <button class="settings-close" onclick="closeSettings()"><span class="material-icons-round">close</span></button>
+    </div>
+    <div class="settings-body">
+      <div class="card" style="margin-bottom:12px">
+        <div class="section-label" style="margin-bottom:12px">Supabase 接続設定</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">URLとAPIキーを入力してください。</p>
+        <div class="form-group"><label class="form-label">Project URL</label><input class="form-input" id="s-url" autocorrect="off" autocapitalize="off" spellcheck="false" type="text" placeholder="https://xxxx.supabase.co" autocomplete="off"></div>
+        <div class="form-group"><label class="form-label">Publishable (anon) Key</label><input class="form-input" id="s-key" autocorrect="off" autocapitalize="off" spellcheck="false" type="text" placeholder="sb_publishable_..." autocomplete="off"></div>
+        <div class="form-group">
+          <label class="form-label">Gemini API Key</label>
+          <input class="form-input" id="s-gemini" autocorrect="off" autocapitalize="off" spellcheck="false" type="text" placeholder="AIza..." autocomplete="new-password">
+          <div style="margin-top:6px"><a style="color:var(--accent);font-size:12px;text-decoration:none" href="https://aistudio.google.com/apikey" target="_blank">→ Google AI Studioで無料取得</a></div>
+        </div>
+        <button class="btn-primary" onclick="saveSettings()">設定を保存する</button>
+      </div>
+      <div class="card">
+        <div class="section-label" style="margin-bottom:8px">DB情報</div>
+        <div style="font-size:13px;color:var(--muted)">
+          <div id="settings-url" style="word-break:break-all;margin-bottom:4px"></div>
+          <div id="settings-count">件数：-</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
+// ===== PWA iOSキーボード後のナビバーズレ修正 =====
+(function() {
+  function init() {
+    var nav = document.getElementById('main-nav');
+    if (!nav || !window.visualViewport) return;
+    var baseHeight = window.visualViewport.height;
+    window.visualViewport.addEventListener('resize', function() {
+      var vv = window.visualViewport;
+      var diff = baseHeight - vv.height;
+      if (diff > 100) {
+        nav.style.transition = 'none';
+        nav.style.transform = 'translateY(' + diff + 'px)';
+      } else {
+        nav.style.transition = 'transform 0.25s ease';
+        nav.style.transform = 'translateY(0)';
+        baseHeight = vv.height;
+      }
+    });
+    window.addEventListener('orientationchange', function() {
+      setTimeout(function() {
+        baseHeight = window.visualViewport.height;
+        nav.style.transform = 'translateY(0)';
+      }, 300);
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
+// ===== Supabase =====
 let _sb = null;
 function getClient() {
   const url = (localStorage.getItem('sb_url') || '').replace(/\/$/, '');
@@ -343,7 +465,6 @@ function showPage(name, btn) {
   window.scrollTo(0,0);
   if (name==='home') renderHome();
   if (name==='chart') renderChart();
-  if (name==='settings') renderSettings();
 }
 
 function changeMonth(d) {
@@ -370,11 +491,11 @@ async function renderHome() {
       : '<div style="color:var(--muted);font-size:13px">データなし</div>';
     document.getElementById('item-list').innerHTML = mi.length
       ? mi.map(function(i){ const tc={メルカリ:'tag-mercari',ラクマ:'tag-rakuma',ヤフオク:'tag-yahoo','PayPayフリマ':'tag-paypay'}; const d=new Date(i.date); return '<div class="item-card" onclick="showDetail(this)" data-item=\''+JSON.stringify(i).replace(/'/g,"&#39;")+'\' style="cursor:pointer"><div class="item-info"><div class="item-name">'+i.name+'</div><div class="item-sub"><span class="tag '+(tc[i.app]||'tag-other')+'">'+i.app+'</span>'+(d.getMonth()+1)+'/'+d.getDate()+'</div></div><div class="item-price"><div class="item-sale-val">'+fmt(+i.price||0)+'</div><div class="item-profit-val">+'+fmt(+i.profit||0)+'</div></div></div>'; }).join('')
-      : '<div class="empty"><div class="empty-icon"><span class="material-icons-round" style="font-size:52px;color:var(--muted)">inventory_2</span></div><div class="empty-text">まだ記録がありません<br>追加から登録してね</div></div>';
+      : '<div class="empty"><span class="material-icons-round" style="font-size:52px;color:var(--muted);display:block;text-align:center;margin-bottom:12px">inventory_2</span><div class="empty-text" style="text-align:center">まだ記録がありません<br>追加から登録してね</div></div>';
     st.textContent='DB ✓'; st.className='db-badge db-ok';
   } catch(e) {
     st.textContent='エラー'; st.className='db-badge db-err';
-    document.getElementById('item-list').innerHTML='<div class="empty"><div class="empty-icon"><span class="material-icons-round" style="font-size:52px;color:#ffb347">wifi_off</span></div><div class="empty-text">接続エラー<br>設定を確認してください</div></div>';
+    document.getElementById('item-list').innerHTML='<div class="empty"><span class="material-icons-round" style="font-size:52px;color:#ffb347;display:block;text-align:center;margin-bottom:12px">wifi_off</span><div class="empty-text" style="text-align:center">接続エラー<br>設定を確認してください</div></div>';
   }
 }
 
@@ -423,14 +544,7 @@ async function updateItem(oldId) {
     saveBtn.textContent = '保存';
     saveBtn.onclick = saveItem;
     saveBtn._editId = null;
-    ['f-name','f-price','f-shipping','f-cost','f-packing'].forEach(function(id){document.getElementById(id).value='';});
-    document.getElementById('f-fee').value=0;
-    document.getElementById('f-profit').value=0;
-    document.getElementById('f-profit-display').textContent='¥0';
-    document.getElementById('f-profit-display').style.color='#06a070';
-    document.getElementById('f-category').value='遊戯王';
-    const t=new Date();
-    document.getElementById('f-date').value=t.getFullYear()+'/'+String(t.getMonth()+1).padStart(2,'0')+'/'+String(t.getDate()).padStart(2,'0');
+    resetAddForm();
     renderHome();
   } catch(e) { toast('更新失敗: '+e.message,'error'); }
 }
@@ -458,23 +572,14 @@ function showDetail(el) {
   const profit = +item.profit||0;
   document.getElementById('d-profit').textContent = fmt(profit);
   document.getElementById('d-profit').className = 'detail-value ' + (profit >= 0 ? 'green' : 'red');
-  document.getElementById('d-delete-btn').onclick = function() {
-    closeDetail(); deleteItem(item.id);
-  };
-  document.getElementById('d-edit-btn').onclick = function() {
-    closeDetail(); editItem(item);
-  };
+  document.getElementById('d-delete-btn').onclick = function() { closeDetail(); deleteItem(item.id); };
+  document.getElementById('d-edit-btn').onclick = function() { closeDetail(); editItem(item); };
   document.getElementById('detail-modal').classList.add('show');
   document.body.classList.add('modal-open');
   const sheet = document.querySelector('.detail-sheet');
   let startY = 0;
   sheet.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; }, {passive:true});
-  sheet.addEventListener('touchend', function(e) {
-    const dy = e.changedTouches[0].clientY - startY;
-    if (dy > 60) closeDetail();
-  }, {passive:true});
-  document.getElementById('detail-modal')._blockScroll = function(e) { e.preventDefault(); };
-  document.getElementById('detail-modal').addEventListener('touchmove', document.getElementById('detail-modal')._blockScroll, {passive:false});
+  sheet.addEventListener('touchend', function(e) { if(e.changedTouches[0].clientY - startY > 60) closeDetail(); }, {passive:true});
 }
 
 function closeDetail(e) {
@@ -482,6 +587,25 @@ function closeDetail(e) {
     document.getElementById('detail-modal').classList.remove('show');
     document.body.classList.remove('modal-open');
   }
+}
+
+// ===== 設定モーダル =====
+function openSettings() {
+  document.getElementById('s-url').value = localStorage.getItem('sb_url')||'';
+  document.getElementById('s-key').value = localStorage.getItem('sb_key')||'';
+  document.getElementById('s-gemini').value = localStorage.getItem('gemini_key')||'';
+  document.getElementById('settings-url').textContent = localStorage.getItem('sb_url')||'未設定';
+  try { dbGetAll().then(function(all){ document.getElementById('settings-count').textContent='件数：'+all.length+' 件'; }); }
+  catch(e) { document.getElementById('settings-count').textContent='件数：接続エラー'; }
+  document.getElementById('settings-modal').classList.add('show');
+  document.body.classList.add('modal-open');
+}
+function closeSettings() {
+  document.getElementById('settings-modal').classList.remove('show');
+  document.body.classList.remove('modal-open');
+}
+function closeSettingsOutside(e) {
+  if (e.target === document.getElementById('settings-modal')) closeSettings();
 }
 
 const FEE_RATES = {'メルカリ':0.10,'ラクマ':0.06,'ヤフオク':0.10,'PayPayフリマ':0.05,'その他':0.10};
@@ -498,6 +622,17 @@ function calcProfit() {
   document.getElementById('f-profit-display').style.color=profit>=0?'#06a070':'#e63262';
 }
 
+function resetAddForm() {
+  ['f-name','f-price','f-shipping','f-cost','f-packing'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('f-fee').value=0;
+  document.getElementById('f-profit').value=0;
+  document.getElementById('f-profit-display').textContent='¥0';
+  document.getElementById('f-profit-display').style.color='#06a070';
+  document.getElementById('f-category').value='遊戯王';
+  const t=new Date();
+  document.getElementById('f-date').value=t.getFullYear()+'/'+String(t.getMonth()+1).padStart(2,'0')+'/'+String(t.getDate()).padStart(2,'0');
+}
+
 async function handleImage(e) {
   const file=e.target.files[0]; if(!file) return;
   e.target.value='';
@@ -509,12 +644,7 @@ async function handleImage(e) {
   document.getElementById('upload-icon').innerHTML='<span class="spinner"></span>';
   document.getElementById('upload-text').textContent='AI解析中...';
   try {
-    const jpegBase64=await new Promise(function(res,rej){
-      const img=new Image(),url=URL.createObjectURL(file);
-      img.onload=function(){ const canvas=document.createElement('canvas'); const max=1200; let w=img.width,h=img.height; if(w>max||h>max){if(w>h){h=Math.round(h*max/w);w=max;}else{w=Math.round(w*max/h);h=max;}} canvas.width=w;canvas.height=h; canvas.getContext('2d').drawImage(img,0,0,w,h); URL.revokeObjectURL(url); res(canvas.toDataURL('image/jpeg',0.85).split(',')[1]); };
-      img.onerror=function(){rej(new Error('画像読み込み失敗'));};
-      img.src=url;
-    });
+    const jpegBase64=await toBase64(file);
     let data;
     for(let attempt=1;attempt<=3;attempt++){
       if(attempt>1){ document.getElementById('upload-text').textContent='再試行中... ('+attempt+'/3)'; await new Promise(function(r){setTimeout(r,3000*attempt);}); }
@@ -544,13 +674,9 @@ async function handleImage(e) {
     if(p.name){
       const bracket=p.name.match(/【([^】]+)】/);
       const kw=bracket?bracket[1]:'';
-      if(kw==='ポケカ'){
-        document.getElementById('f-category').value='ポケモン';
-      } else if(kw==='遊戯王'){
-        document.getElementById('f-category').value='遊戯王';
-      } else {
-        document.getElementById('f-category').value='その他';
-      }
+      if(kw==='ポケカ') document.getElementById('f-category').value='ポケモン';
+      else if(kw==='遊戯王') document.getElementById('f-category').value='遊戯王';
+      else document.getElementById('f-category').value='その他';
     }
     document.getElementById('f-packing').value=10;
     calcProfit();
@@ -580,17 +706,153 @@ async function saveItem() {
   const item={id:Date.now().toString(),name,date:date.replace(/\//g,'-'),app:document.getElementById('f-app').value,category:document.getElementById('f-category').value,price,fee_amount:+document.getElementById('f-fee').value||0,shipping:+document.getElementById('f-shipping').value||0,profit:+document.getElementById('f-profit').value||0,cost:+document.getElementById('f-cost').value||0,packing:packingVal,delivery_method:'',item_id:''};
   try {
     await dbInsert(item); toast('保存しました！');
-    ['f-name','f-price','f-shipping','f-cost','f-packing'].forEach(function(id){document.getElementById(id).value='';});
-    document.getElementById('f-fee').value=0;
-    document.getElementById('f-profit').value=0;
-    document.getElementById('f-profit-display').textContent='¥0';
-    document.getElementById('f-profit-display').style.color='#06a070';
-    document.getElementById('f-category').value='遊戯王';
-    const t=new Date();
-    document.getElementById('f-date').value=t.getFullYear()+'/'+String(t.getMonth()+1).padStart(2,'0')+'/'+String(t.getDate()).padStart(2,'0');
+    resetAddForm();
   } catch(e){toast('保存失敗: '+e.message,'error');}
 }
 
+// ===== 画像→Base64変換ユーティリティ =====
+function toBase64(file) {
+  return new Promise(function(res, rej) {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const max = 1200; let w = img.width, h = img.height;
+      if(w>max||h>max){ if(w>h){h=Math.round(h*max/w);w=max;}else{w=Math.round(w*max/h);h=max;} }
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      res(canvas.toDataURL('image/jpeg',0.85).split(',')[1]);
+    };
+    img.onerror = function(){ rej(new Error('画像読み込み失敗')); };
+    img.src = url;
+  });
+}
+
+// ===== 商品名・説明生成機能 =====
+const RARITIES = ['ノーマル','ノーレア','レア','スーパー','ウルトラ','シークレット','レリーフ','ホログラフィック','パラレル','ウルトラパラレル','20th','25th','プリズマ'];
+let selectedRarity = '';
+let cardImageBase64 = '';
+
+// レアリティグリッド生成
+(function() {
+  const grid = document.getElementById('rarity-grid');
+  RARITIES.forEach(function(r) {
+    const btn = document.createElement('button');
+    btn.className = 'rarity-btn';
+    btn.textContent = r;
+    btn.onclick = function() {
+      document.querySelectorAll('.rarity-btn').forEach(function(b){ b.classList.remove('selected'); });
+      btn.classList.add('selected');
+      selectedRarity = r;
+    };
+    grid.appendChild(btn);
+  });
+})();
+
+function handleCardImage(e) {
+  const file = e.target.files[0]; if (!file) return;
+  e.target.value = '';
+  const preview = document.getElementById('card-preview');
+  const url = URL.createObjectURL(file);
+  preview.src = url;
+  preview.classList.add('show');
+  const area = document.getElementById('card-upload-area');
+  area.classList.add('has-image');
+  document.getElementById('card-upload-icon').textContent = 'check_circle';
+  document.getElementById('card-upload-icon').style.color = 'var(--green)';
+  document.getElementById('card-upload-text').textContent = '画像を選択済み（タップで変更）';
+  // base64変換
+  toBase64(file).then(function(b64) { cardImageBase64 = b64; });
+}
+
+async function generateDescription() {
+  if (!cardImageBase64) { toast('カード画像を選択してください', 'error'); return; }
+  if (!selectedRarity)  { toast('レアリティを選択してください', 'error'); return; }
+  const geminiKey = localStorage.getItem('gemini_key') || '';
+  if (!geminiKey) { toast('⚙️設定からGemini APIキーを入力してください', 'error'); return; }
+
+  const btn = document.getElementById('generate-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner" style="border-color:#ffcbb5;border-top-color:#fff;margin-right:8px"></span>生成中...';
+
+  const prompt = `これは遊戯王カードの画像です。以下の情報を読み取ってください。
+
+読み取る情報：
+- カード名（日本語）
+- 型番（カード右下や左下に記載されている英数字、例：BLUE-A001、SD12-JP001 など）
+
+レアリティは「${selectedRarity}」です。
+
+以下のJSONフォーマットのみで返してください。マークダウンや説明は不要です：
+{"card_name":"カード名","card_number":"型番"}
+
+型番が読み取れない場合は null にしてください。`;
+
+  try {
+    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+geminiKey, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        contents:[{parts:[
+          {inline_data:{mime_type:'image/jpeg', data:cardImageBase64}},
+          {text: prompt}
+        ]}],
+        generationConfig:{temperature:0, maxOutputTokens:300, thinkingConfig:{thinkingBudget:0}}
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    if (!data.candidates||!data.candidates[0]) throw new Error('レスポンス空');
+
+    const parts = data.candidates[0].content.parts;
+    const textPart = parts.find(function(pt){ return pt.text && pt.text.includes('{'); });
+    if (!textPart) throw new Error('テキスト取得失敗');
+    const jsonMatch = textPart.text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('JSON解析失敗');
+    const p = JSON.parse(jsonMatch[0]);
+
+    const cardName   = p.card_name   || '不明';
+    const cardNumber = p.card_number || '不明';
+    const rarity     = selectedRarity;
+
+    // タイトル：「・」「-」を除去
+    const titleName = cardName.replace(/[・\-－]/g, '');
+    const title = titleName + ' ' + rarity + ' ' + cardNumber;
+
+    // 説明文：そのまま
+    const desc =
+      '【カード名】\n' + cardName + '\n' +
+      '【レアリティ】\n' + rarity + '\n' +
+      '【型番】\n' + cardNumber;
+
+    document.getElementById('result-title').textContent = title;
+    document.getElementById('result-desc').textContent  = desc;
+    document.getElementById('generate-result').style.display = 'block';
+    window.scrollTo(0, document.body.scrollHeight);
+
+  } catch(err) {
+    toast('生成失敗: ' + (err.message||'不明').slice(0,60), 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-icons-round" style="font-size:18px;vertical-align:-4px;margin-right:4px">auto_awesome</span>商品名・説明を生成';
+  }
+}
+
+function copyText(id) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(function() {
+    toast('コピーしました！');
+  }).catch(function() {
+    // フォールバック
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('コピーしました！');
+  });
+}
+
+// ===== グラフ =====
 let chartInsts = {};
 function destroyChart(key) { if(chartInsts[key]){chartInsts[key].destroy();delete chartInsts[key];} }
 
@@ -654,40 +916,15 @@ function saveSettings() {
   const key=document.getElementById('s-key').value.trim();
   const gemini=document.getElementById('s-gemini').value.trim();
   if(!url||!key){toast('URLとキーを入力してください','error');return;}
-  localStorage.setItem('sb_url',url);localStorage.setItem('sb_key',key);
-  if(gemini)localStorage.setItem('gemini_key',gemini);
-  _sb=null;toast('設定を保存しました');renderSettings();renderHome();
-}
-async function renderSettings() {
-  document.getElementById('s-url').value=localStorage.getItem('sb_url')||'';
-  document.getElementById('s-key').value=localStorage.getItem('sb_key')||'';
-  document.getElementById('s-gemini').value=localStorage.getItem('gemini_key')||'';
-  document.getElementById('settings-url').textContent=localStorage.getItem('sb_url')||'未設定';
-  try{const all=await dbGetAll();document.getElementById('settings-count').textContent='件数：'+all.length+' 件';}
-  catch{document.getElementById('settings-count').textContent='件数：接続エラー';}
+  localStorage.setItem('sb_url',url); localStorage.setItem('sb_key',key);
+  if(gemini) localStorage.setItem('gemini_key',gemini);
+  _sb=null; toast('設定を保存しました'); closeSettings(); renderHome();
 }
 
 const _now=new Date();
 document.getElementById('f-date').value=_now.getFullYear()+'/'+String(_now.getMonth()+1).padStart(2,'0')+'/'+String(_now.getDate()).padStart(2,'0');
 renderHome();
 
-// ===== iOSキーボード後のフッターズレ修正 =====
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', function() {
-    var isKeyboardOpen = window.visualViewport.height < window.innerHeight * 0.75;
-    if (!isKeyboardOpen) {
-      setTimeout(function() {
-        window.scrollTo(0, 0);
-      }, 50);
-    }
-  });
-} else {
-  window.addEventListener('focusout', function() {
-    setTimeout(function() { window.scrollTo(0, 0); }, 150);
-  });
-}
-
-// 起動直後にviewportを再計算
 window.scrollTo(0,1);
 setTimeout(function(){ window.scrollTo(0,0); }, 50);
 setTimeout(function(){ window.scrollTo(0,1); setTimeout(function(){ window.scrollTo(0,0); }, 50); }, 300);
