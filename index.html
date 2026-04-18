@@ -775,18 +775,35 @@ async function generateDescription() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner" style="border-color:#ffcbb5;border-top-color:#fff;margin-right:8px"></span>生成中...';
 
+  // レアリティ別表記定義
+  // title: タイトルに使う表記、desc: 説明文に使う表記（配列の場合は複数行）
+  const RARITY_MAP = {
+    'ノーマル':       { title: 'ノーマル',               desc: 'ノーマル' },
+    'ノーレア':       { title: 'ノーレア',               desc: 'ノーマルレア' },
+    'レア':           { title: 'レア',                   desc: 'レア' },
+    'スーパー':       { title: 'スーパー',               desc: 'スーパーレア' },
+    'ウルトラ':       { title: 'ウルトラ',               desc: 'ウルトラレア' },
+    'シークレット':   { title: 'シク シークレット',       desc: 'シークレットレア' },
+    'レリーフ':       { title: 'レリーフ',               desc: 'アルティメットレア' },
+    'ホログラフィック':{ title: 'ホロ ホログラフィック',  desc: 'ホログラフィックレア' },
+    'パラレル':       { title: 'パラレル',               desc: 'パラレル' },
+    'ウルトラパラレル':{ title: 'ウルパラ',              desc: 'ウルトラパラレル' },
+    '20th':           { title: '20th',                   desc: '20thシークレットレア' },
+    '25th':           { title: '25th クオシク',           desc: '25thシークレットレア\nクォーターセンチュリーシークレットレア' },
+    'プリズマ':       { title: 'プリズマ プリシク',       desc: 'プリズマティックシークレットレア' },
+  };
+
   const prompt = `これは遊戯王カードの画像です。以下の情報を読み取ってください。
 
 読み取る情報：
 - カード名（日本語）
 - 型番（カード右下や左下に記載されている英数字、例：BLUE-A001、SD12-JP001 など）
-
-レアリティは「${selectedRarity}」です。
+- 画像に写っているカードの枚数（1枚なら1、複数枚なら枚数）
 
 以下のJSONフォーマットのみで返してください。マークダウンや説明は不要です：
-{"card_name":"カード名","card_number":"型番"}
+{"card_name":"カード名","card_number":"型番","card_count":1}
 
-型番が読み取れない場合は null にしてください。`;
+型番が読み取れない場合は card_number を null にしてください。`;
 
   try {
     const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+geminiKey, {
@@ -812,16 +829,18 @@ async function generateDescription() {
 
     const cardName   = p.card_name   || '不明';
     const cardNumber = p.card_number || '不明';
-    const rarity     = selectedRarity;
+    const cardCount  = p.card_count  || 1;
+    const rarityDef  = RARITY_MAP[selectedRarity] || { title: selectedRarity, desc: selectedRarity };
 
-    // タイトル：「・」「-」を除去
+    // タイトル：「・」「-」を除去、複数枚なら枚数を追加
     const titleName = cardName.replace(/[・\-－]/g, '');
-    const title = titleName + ' ' + rarity + ' ' + cardNumber;
+    const countStr  = cardCount >= 2 ? ' ' + cardCount + '枚' : '';
+    const title = titleName + ' ' + rarityDef.title + countStr + ' ' + cardNumber;
 
-    // 説明文：そのまま
+    // 説明文：各項目間に空行を挟む
     const desc =
-      '【カード名】\n' + cardName + '\n' +
-      '【レアリティ】\n' + rarity + '\n' +
+      '【カード名】\n' + cardName + '\n\n' +
+      '【レアリティ】\n' + rarityDef.desc + '\n\n' +
       '【型番】\n' + cardNumber;
 
     document.getElementById('result-title').textContent = title;
