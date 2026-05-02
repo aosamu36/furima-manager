@@ -22,16 +22,16 @@
 body {
   font-family: -apple-system, 'Hiragino Sans', sans-serif;
   background: var(--bg); color: var(--text);
-  min-height: 100dvh;
+  min-height: 100%;
   padding-top: calc(52px + env(safe-area-inset-top) + 8px);
   padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);
   -webkit-font-smoothing: antialiased;
 }
 body.modal-open { overflow: hidden; }
 /* SPLASH */
-.splash { position: fixed; inset: 0; z-index: 999; background: #000; opacity: 1; transition: opacity 0.7s ease; }
+.splash { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999; background: #000; opacity: 1; transition: opacity 0.7s ease; overflow: hidden; }
 .splash.hide { opacity: 0; pointer-events: none; }
-.splash img { width: 100%; height: 110%; object-fit: cover; object-position: center top; display: block; }
+.splash img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
 /* HEADER */
 .header {
   position: fixed; top: 0; left: 0; right: 0; z-index: 200;
