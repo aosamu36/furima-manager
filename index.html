@@ -38,13 +38,8 @@ body {
   font-family: -apple-system, 'Hiragino Sans', sans-serif;
   background: var(--bg);
   color: var(--text);
-  min-height: 100dvh;
-  /* padding-top: env()はヘッダーが position:fixed なので遅延しても見た目に出ない */
   padding-top: calc(52px + env(safe-area-inset-top) + 8px);
-  /* padding-bottom は env() を使わず固定値。
-     nav の Safe Area 吸収は nav 側の padding-bottom に任せる。
-     84px = nav-h(60px) + ホームインジケーター想定(34px) - 余裕 + 16px */
-  padding-bottom: calc(var(--nav-h) + 34px + 16px);
+  padding-bottom: calc(var(--nav-h) + 16px);
   -webkit-font-smoothing: antialiased;
 }
 body.modal-open { overflow: hidden; }
