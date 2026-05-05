@@ -39,11 +39,26 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100dvh;
+  /* padding-top: env()はヘッダーが position:fixed なので遅延しても見た目に出ない */
   padding-top: calc(52px + env(safe-area-inset-top) + 8px);
-  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);
+  /* padding-bottom は env() を使わず固定値。
+     nav の Safe Area 吸収は nav 側の padding-bottom に任せる。
+     84px = nav-h(60px) + ホームインジケーター想定(34px) - 余裕 + 16px */
+  padding-bottom: calc(var(--nav-h) + 34px + 16px);
   -webkit-font-smoothing: antialiased;
 }
 body.modal-open { overflow: hidden; }
+
+/*
+ * スプラッシュ表示中は body を完全固定。
+ * position:fixed + inset:0 にすることで iOS PWA が
+ * Safe Area をスプラッシュ除去後に正しく再計算する。
+ */
+body.splash-active {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
 
 /* ===== SPLASH ===== */
 .splash {
@@ -118,8 +133,11 @@ body.modal-open { overflow: hidden; }
   -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--border);
   display: flex;
+  /* nav自身はposition:fixedなのでenv()の遅延影響を受けない。
+     padding-bottomでホームインジケーターを吸収し、heightはautoにする */
   padding-bottom: env(safe-area-inset-bottom);
-  height: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  height: auto;
+  min-height: var(--nav-h);
 }
 .nav-btn {
   flex: 1;
@@ -603,7 +621,7 @@ body.modal-open { overflow: hidden; }
 </style>
 
 </head>
-<body>
+<body class="splash-active">
 
 <!-- ===== SPLASH ===== -->
 
@@ -1735,14 +1753,14 @@ function saveSettings() {
 
   renderHome();
 
-  // スプラッシュ非表示 → 消去後にスクロール位置をリセット
+  // スプラッシュ非表示 → 除去後に body.splash-active を解除
   setTimeout(function () {
     var s = document.getElementById('splash');
     s.classList.add('hide');
     setTimeout(function () {
       s.remove();
-      // スプラッシュ除去後、iOS PWA の余白ズレをリセット
-      window.scrollTo(0, 0);
+      // splash-active を外すと iOS PWA が Safe Area を正しく再計算する
+      document.body.classList.remove('splash-active');
     }, 800);
   }, 2200);
 })();
