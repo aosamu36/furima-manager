@@ -2,7 +2,7 @@
   "name": "決闘売上録",
   "short_name": "決闘売上録",
   "description": "トレカフリマ売上管理アプリ",
-  "start_url": "./furima-stable.html",
+  "start_url": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#000000",
