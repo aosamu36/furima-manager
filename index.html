@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="決闘売上録">
 <meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 <title>決闘売上録</title>
@@ -38,22 +39,12 @@ body {
   font-family: -apple-system, 'Hiragino Sans', sans-serif;
   background: var(--bg);
   color: var(--text);
+  min-height: 100dvh;
   padding-top: calc(52px + env(safe-area-inset-top) + 8px);
-  padding-bottom: calc(var(--nav-h) + 34px + 16px);
+  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);
   -webkit-font-smoothing: antialiased;
 }
 body.modal-open { overflow: hidden; }
-
-/*
- * スプラッシュ表示中は body を完全固定。
- * position:fixed + inset:0 にすることで iOS PWA が
- * Safe Area をスプラッシュ除去後に正しく再計算する。
- */
-body.splash-active {
-  position: fixed;
-  inset: 0;
-  overflow: hidden;
-}
 
 /* ===== SPLASH ===== */
 .splash {
@@ -128,11 +119,8 @@ body.splash-active {
   -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--border);
   display: flex;
-  /* nav自身はposition:fixedなのでenv()の遅延影響を受けない。
-     padding-bottomでホームインジケーターを吸収し、heightはautoにする */
-  padding-bottom: 34px;
-  height: auto;
-  min-height: var(--nav-h);
+  padding-bottom: env(safe-area-inset-bottom);
+  height: calc(var(--nav-h) + env(safe-area-inset-bottom));
 }
 .nav-btn {
   flex: 1;
@@ -367,7 +355,7 @@ body.splash-active {
 /* ===== TOAST ===== */
 .toast {
   position: fixed;
-  bottom: calc(var(--nav-h) + 34px + 12px);
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px);
   left: 50%;
   transform: translateX(-50%) translateY(8px);
   background: #333;
@@ -431,7 +419,7 @@ body.splash-active {
   width: 100%;
   max-height: 80vh;
   overflow-y: auto;
-  padding-bottom: calc(34px + 16px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
   transform: translateY(100%);
   transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
   box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.15);
@@ -519,7 +507,7 @@ body.splash-active {
   width: 100%;
   max-height: 88vh;
   overflow-y: auto;
-  padding-bottom: calc(34px + 16px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
   transform: translateY(100%);
   transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
 }
@@ -616,7 +604,7 @@ body.splash-active {
 </style>
 
 </head>
-<body class="splash-active">
+<body>
 
 <!-- ===== SPLASH ===== -->
 
@@ -1120,7 +1108,6 @@ async function renderHome() {
     }, 0));
     document.getElementById('month-count').textContent = mi.length + '件';
 
-    // アプリ別集計
     var appMap = {};
     mi.forEach(function (i) {
       if (!appMap[i.app]) appMap[i.app] = { sales: 0, profit: 0 };
@@ -1138,7 +1125,6 @@ async function renderHome() {
         }).join('')
       : '<div style="color:var(--muted);font-size:13px">データなし</div>';
 
-    // アイテムリスト
     document.getElementById('item-list').innerHTML = mi.length
       ? mi.map(function (i) {
           var tagClass = APP_TAG_CLASS[i.app] || 'tag-other';
@@ -1201,7 +1187,6 @@ function showDetail(el) {
   document.getElementById('detail-modal').classList.add('show');
   document.body.classList.add('modal-open');
 
-  // スワイプで閉じる
   var sheet = document.querySelector('.detail-sheet');
   var startY = 0;
   sheet.addEventListener('touchstart', function (e) { startY = e.touches[0].clientY; }, { passive: true });
@@ -1486,7 +1471,6 @@ async function handleImage(e) {
 var selectedRarity   = '';
 var cardImageBase64  = '';
 
-// レアリティグリッドを動的生成
 (function () {
   var grid = document.getElementById('rarity-grid');
   RARITIES.forEach(function (r) {
@@ -1748,15 +1732,11 @@ function saveSettings() {
 
   renderHome();
 
-  // スプラッシュ非表示 → 除去後に body.splash-active を解除
+  // スプラッシュ非表示
   setTimeout(function () {
     var s = document.getElementById('splash');
     s.classList.add('hide');
-    setTimeout(function () {
-      s.remove();
-      // splash-active を外すと iOS PWA が Safe Area を正しく再計算する
-      document.body.classList.remove('splash-active');
-    }, 800);
+    setTimeout(function () { s.remove(); }, 800);
   }, 2200);
 })();
 </script>
