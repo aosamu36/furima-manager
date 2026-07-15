@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -602,18 +601,15 @@ body.modal-open { overflow: hidden; }
 }
 .card-preview.show { display: block; }
 </style>
-
 </head>
 <body>
 
 <!-- ===== SPLASH ===== -->
-
 <div class="splash" id="splash">
   <img src="splash.PNG" alt="">
 </div>
 
 <!-- ===== HEADER ===== -->
-
 <header class="header" id="main-header">
   <img class="header-logo" src="logo.PNG" alt="決闘売上録">
   <div class="header-right">
@@ -625,7 +621,6 @@ body.modal-open { overflow: hidden; }
 </header>
 
 <!-- ===== PAGE: HOME ===== -->
-
 <div class="page active" id="page-home">
   <div class="month-nav">
     <button class="month-btn" onclick="changeMonth(-1)">‹</button>
@@ -668,7 +663,6 @@ body.modal-open { overflow: hidden; }
 </div>
 
 <!-- ===== PAGE: ADD ===== -->
-
 <div class="page" id="page-add">
   <div class="card">
     <div class="section-label" style="margin-bottom:12px;display:flex;align-items:center;gap:6px">
@@ -753,7 +747,6 @@ body.modal-open { overflow: hidden; }
 </div>
 
 <!-- ===== PAGE: CHART ===== -->
-
 <div class="page" id="page-chart">
   <div class="year-select-wrap" style="margin-bottom:20px">
     <select class="year-select" id="chart-year" onchange="renderChart()"></select>
@@ -789,7 +782,6 @@ body.modal-open { overflow: hidden; }
 </div>
 
 <!-- ===== PAGE: GENERATE ===== -->
-
 <div class="page" id="page-generate">
   <div class="card">
     <div class="section-label" style="margin-bottom:12px;display:flex;align-items:center;gap:6px">
@@ -828,7 +820,6 @@ body.modal-open { overflow: hidden; }
 </div>
 
 <!-- ===== BOTTOM NAV ===== -->
-
 <nav class="nav" id="main-nav">
   <button class="nav-btn active" onclick="showPage('home', this)">
     <span class="material-icons-round nav-icon">home</span>ホーム
@@ -847,7 +838,6 @@ body.modal-open { overflow: hidden; }
 <div class="toast" id="toast"></div>
 
 <!-- ===== DETAIL MODAL ===== -->
-
 <div class="detail-modal" id="detail-modal" onclick="closeDetail(event)">
   <div class="detail-sheet">
     <div class="detail-handle"></div>
@@ -879,7 +869,6 @@ body.modal-open { overflow: hidden; }
 </div>
 
 <!-- ===== DONE MODAL ===== -->
-
 <div id="done-modal" class="modal" onclick="const m=this;clearTimeout(m._t);m.classList.remove('show')">
   <div class="modal-inner">
     <div style="margin-bottom:8px">
@@ -891,7 +880,6 @@ body.modal-open { overflow: hidden; }
 </div>
 
 <!-- ===== SETTINGS MODAL ===== -->
-
 <div class="settings-modal" id="settings-modal" onclick="closeSettingsOutside(event)">
   <div class="settings-sheet">
     <div class="detail-handle"></div>
@@ -1403,7 +1391,7 @@ async function handleImage(e) {
           body: JSON.stringify({
             contents: [{ parts: [
               { inline_data: { mime_type: 'image/jpeg', data: jpegBase64 } },
-              { text: 'You are a data extraction assistant. Extract information from this Japanese flea market app transaction screenshot. Return ONLY a valid JSON object with no markdown, no backticks, no explanation. Use exactly this format: {"name":"item name in Japanese","date":"YYYY-MM-DD","app":"メルカリ","price":0,"fee_amount":0,"shipping":0,"profit":0} Use null for unknown values.' }
+              { text: 'You are a data extraction assistant. Extract information from this Japanese flea market app transaction screenshot. Return ONLY a valid JSON object with no markdown, no backticks, no explanation. Use exactly this format: {"name":"item name in Japanese","date":"YYYY-MM-DD","app":"メルカリ","price":0,"fee_amount":0,"shipping":0,"profit":0,"delivery_method":"配送方法"} For delivery_method, extract the shipping method name in Japanese (e.g. ゆうゆうメルカリ便, らくらくメルカリ便, 普通郵便, ネコポス etc). Use null for unknown values.' }
             ]}],
             generationConfig: { temperature: 0, maxOutputTokens: 500, thinkingConfig: { thinkingBudget: 0 } }
           })
@@ -1431,8 +1419,8 @@ async function handleImage(e) {
     }
     if (p.price != null) document.getElementById('f-price').value = p.price;
 
-    var shippingVal = (p.shipping != null && p.shipping > 0) ? p.shipping : 85;
-    if (shippingVal === 160) shippingVal = 180;
+    var defaultShipping = (p.delivery_method && p.delivery_method.includes('ゆうゆう')) ? 180 : 85;
+    var shippingVal = (p.shipping != null && p.shipping > 0) ? p.shipping : defaultShipping;
     document.getElementById('f-shipping').value = shippingVal;
 
     if (p.name) {
@@ -1740,6 +1728,5 @@ function saveSettings() {
   }, 2200);
 })();
 </script>
-
 </body>
 </html>
